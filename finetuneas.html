@@ -113,7 +113,7 @@ function loadAudio(evt) {
       r.onload = function(e) { 
 		var contents = e.target.result;
 		var lines = contents.split("\n");
-		for (i=0; i<lines.length; i++){
+		for (i=0; i<lines.length-1; i++){
 			lines[i] = lines[i].split(",");
 
 			//get the text
@@ -135,7 +135,7 @@ function loadAudio(evt) {
 		document.getElementById('step2').style.display="none";
 		document.getElementById('saveanddownload').style.visibility="visible";
 		document.getElementById('fileinfo').innerHTML=ainfo+" "+cinfo;
-		for (i=0; i<lines.length; i++){
+		for (i=0; i<lines.length-1; i++){
 		document.getElementById(i).addEventListener("click", positionClick);
 		document.getElementById(i).nextSibling.addEventListener("click", increaseClick);
 		document.getElementById(i).nextSibling.nextSibling.addEventListener("click", decreaseClick);
@@ -200,7 +200,7 @@ function loadAudio(evt) {
 			fileName = prompt("The file will be saved to your default download directory. Please enter a filename:", "updated.csv");
 
 			setTimeout(function(){
-			for (i=0; i<lines.length; i++){
+			for (i=0; i<lines.length-1; i++){
 				csvlines[i] = lines[i].join(",")
 			};
 			var data = csvlines.join("\n");
@@ -214,7 +214,7 @@ function loadAudio(evt) {
 			fileName = prompt("The file will be saved to your default download directory. Please enter a filename:", "updated.tsv");
 
 			setTimeout(function(){
-			for (i=0; i<lines.length; i++){
+			for (i=0; i<lines.length-1; i++){
 				tsvlines[i] = lines[i][1]+"\t"+lines[i][2]+"\t"+lines[i][0]
 			};
 			var data = tsvlines.join("\n");
