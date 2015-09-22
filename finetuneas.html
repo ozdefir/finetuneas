@@ -1,0 +1,236 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+<title>finetuneas</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+<style>
+#container{text-align:center}
+button{margin:5px}
+.tg{table-layout:fixed; width:100%; border-spacing:0; direction:ltr;}
+.piece{ position:relative; margin-right:auto; margin-left:auto; font-size:1.3em; line-height:150%; font-family:tahoma}
+.h{ font-weight: 900;}
+.position,.increase,.decrease{ display:inline; position:absolute; opacity: 0.6; font-size:140%; line-height:110%; cursor: pointer;font-weight:900;border-style:solid; border-color:#eee; border-width:0px 3px; background-color: #333;color:#fff; opacity: 0.6 }
+.position{ right:150px; padding:2px 5px 0px 5px; margin-right:15px; margin-left:0px;margin-bottom:2px; }
+.increase { right:70px; padding:2px 7px 0px 7px; margin-right:0px; margin-left:0px;margin-bottom:2px;}
+.decrease { right:35px; padding:0px 8px 2px 8px; margin-right:0px; margin-left:0px;margin-bottom:4px;}
+.increase, .decrease, .position, #stop {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+a:hover {opacity:1}
+td{text-align:center; height:3.5em }
+#saveanddownload{position:fixed;  z-index:10; bottom:30px; left:25px; text-align:left; visibility:hidden}
+#fileinput, #audioinput{}
+#step1, #step2, #controls, #fileinfo {text-align:center; margin:20px; font-size:1.6em;}
+#inst {text-align:center; margin:20px auto 80px auto; font-size:1.4em; width:70%; border: 1px solid black; padding:20px;}
+#controls {display:none}
+#playpause{position: fixed; z-index:10;bottom:300px; left:25px}
+#stop{font-size:1.5em;opacity: 0.6; padding:6px 8px 6px 8px; cursor: pointer;background-color: #333;color:#fff;font-weight:900;display:none}
+#stop:hover {opacity:1}
+</style>
+
+</head>
+
+<body>
+
+<div id="container">
+
+<div id="inst">Instructions: 1- Choose the audio and csv files 2- Click on the timestamps to check the beginning time of each fragment, use the "+" and "-" buttons to shift the beginning times 3- Save the file
+
+</div>
+
+<b>
+<div id="step1">Place the audio file in the same folder as this html file, then choose it: <input type="file" id="audioinput" accept="audio/*"/></div>
+<div id="fileinfo"></div>
+<div id="step2">Choose the CSV file: <input type="file" id="fileinput" accept=".csv"/></div>
+<div id="controls"><audio id="audioplayer" src="" type="audio/mpeg" ></audio></div>
+</b>
+
+<div id="playcontainer" >
+<div id="playpause">
+
+<a id="stop">PAUSE</a>
+
+</div>
+</div>
+
+<div id="piecesintable">
+<table id='tb' class='tg'>
+</table>
+</div>
+
+<div id="saveanddownload"   style="" >
+<button id="downloadcsv" style="display:block"  >Save as CSV</button>
+<button id="downloadtsv" style="display:block"  >Save as TSV</button>
+</div>
+</div>
+<script type="text/javascript">
+  var lines=[];
+  var rows=[];
+  var fragments=[];
+  var currentno=0;
+  var audiobj= document.getElementById('audioplayer');
+  var l = document.getElementById("stop");
+  var ainfo="";
+  var cinfo="";
+  var csvlines=[];
+  var tsvlines=[];
+
+
+  document.getElementById('audioinput').addEventListener('change', loadAudio, false);
+  document.getElementById('fileinput').addEventListener('change', parseCsv, false);
+
+function loadAudio(evt) {
+
+    var f = evt.target.files[0]; 
+
+    if (f) {
+	  var audiopath=URL.createObjectURL(f);
+	  audiobj.setAttribute("src",audiopath);
+	  ainfo="[Audio file: "+ f.name+"]";
+	  document.getElementById('fileinfo').innerHTML=ainfo+" "+cinfo;
+	  //document.getElementById('controls').style.display="block";
+	  document.getElementById('step1').style.display="none";
+    } else { 
+      alert("Failed to load file");
+    }
+  
+
+
+}
+
+  function parseCsv(evt) {
+
+    var f = evt.target.files[0]; 
+
+    if (f) {
+      var r = new FileReader();
+      r.onload = function(e) { 
+		var contents = e.target.result;
+		var lines = contents.split("\n");
+		for (i=0; i<lines.length; i++){
+			lines[i] = lines[i].split(",");
+
+			//get the text
+			var fragment=lines[i].slice(3);
+			fragment=fragment.join(",");
+			fragment=fragment.replace(/\r/g,"");
+			fragments[i]=fragment.slice(1, -1);
+			
+			//roundup the timestamp, good for html5 performence (i guess)
+			lines[i][1]=(Math.round(lines[i][1]*100)/100);
+
+	       		rows[i] ="<tr><td></td><td><a class='piece' no=" + i + ">" + fragments[i] + "</a><a class='position' style='' id='" +i+ "' startsat='"+ lines[i][1] +"'>"+ lines[i][1].toFixed(2)+"</a><a class='increase' style=''>+</a><a class='decrease' style=''>&ndash;</a></td><td></td></tr>";
+		}
+		var textcontent =rows.join("");
+
+		document.getElementById("tb").innerHTML = "<col width='300'><col ><col width='300'><tbody>"+textcontent+"</tbody>";
+		
+                cinfo = "[CSV file: "+ f.name+"]";
+		document.getElementById('step2').style.display="none";
+		document.getElementById('saveanddownload').style.visibility="visible";
+		document.getElementById('fileinfo').innerHTML=ainfo+" "+cinfo;
+		for (i=0; i<lines.length; i++){
+		document.getElementById(i).addEventListener("click", positionClick);
+		document.getElementById(i).nextSibling.addEventListener("click", increaseClick);
+		document.getElementById(i).nextSibling.nextSibling.addEventListener("click", decreaseClick);
+		}
+
+		document.getElementById("stop").addEventListener("click", stopClick);
+		document.getElementById("downloadcsv").addEventListener("click", downloadcsvClick);
+		document.getElementById("downloadtsv").addEventListener("click", downloadtsvClick);
+
+		function positionClick(){
+			document.getElementById(currentno).previousSibling.style.backgroundColor = ""
+			currentno = parseFloat(this.id)
+			document.getElementById(currentno).previousSibling.style.backgroundColor = "yellow"
+			audiobj.currentTime = parseFloat(this.getAttribute('startsat'));
+			audiobj.play();
+			l.style.display= 'inline';
+			};
+		function increaseClick(){
+			mis=Number(this.previousSibling.getAttribute("startsat"));
+			mis=mis+0.1;
+			mis=mis.toFixed(2);
+			this.previousSibling.setAttribute("startsat", mis);
+			var changedin = parseFloat(this.previousSibling.id);
+			lines[changedin][1]=mis;
+			if(changedin>0){lines[changedin-1][2]=mis;};
+			this.previousSibling.innerHTML=mis;
+			audiobj.currentTime =mis;
+		};
+		function decreaseClick(){
+			mis=Number(this.previousSibling.previousSibling.getAttribute("startsat"));
+			mis=mis-0.1;
+			mis=mis.toFixed(2);
+			this.previousSibling.previousSibling.setAttribute("startsat", mis);
+			var changedin = parseFloat(this.previousSibling.previousSibling.id);
+			lines[changedin][1]=mis;
+			if(changedin>0){lines[changedin-1][2]=mis;};
+			this.previousSibling.previousSibling.innerHTML=mis;
+			audiobj.currentTime =mis;
+		};
+		function stopClick(){
+			audiobj.pause();
+			l.style.display= 'none';
+		};
+
+		var downloadData = (function () {
+		    var a = document.createElement("a");
+		    document.body.appendChild(a);
+		    a.style = "display: none";
+		    return function (data, fileName) {
+	
+			blob = new Blob([data], {type: "octet/stream"}),
+			url = window.URL.createObjectURL(blob);
+			a.href = url;
+			a.download = fileName;
+			a.click();
+		    };
+		}());
+
+		function downloadcsvClick(){
+			
+
+			fileName = prompt("The file will be saved to your default download directory. Please enter a filename:", "updated.csv");
+
+			setTimeout(function(){
+			for (i=0; i<lines.length; i++){
+				csvlines[i] = lines[i].join(",")
+			};
+			var data = csvlines.join("\n");
+			downloadData(data, fileName);
+			}, 500)
+			window.URL.revokeObjectURL(url);
+		}
+
+		function downloadtsvClick(){
+
+			fileName = prompt("The file will be saved to your default download directory. Please enter a filename:", "updated.tsv");
+
+			setTimeout(function(){
+			for (i=0; i<lines.length; i++){
+				tsvlines[i] = lines[i][1]+"\t"+lines[i][2]+"\t"+lines[i][0]
+			};
+			var data = tsvlines.join("\n");
+			downloadData(data, fileName);
+			}, 500)
+			window.URL.revokeObjectURL(url);
+			}
+
+
+      }
+      r.readAsText(f);
+    } else { 
+      alert("Failed to load file");
+    }
+  
+}
+
+</script>
+</html>
