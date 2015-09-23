@@ -29,8 +29,9 @@ td{text-align:center; height:3.5em }
 #step1, #step2, #controls, #fileinfo {text-align:center; margin:20px; font-size:1.6em;}
 #inst {text-align:center; margin:20px auto 80px auto; font-size:1.4em; width:70%; border: 1px solid black; padding:20px;}
 #controls {display:none}
-#playpause{position: fixed; z-index:10;bottom:300px; left:25px}
-#stop{font-size:1.5em;opacity: 0.6; padding:6px 8px 6px 8px; cursor: pointer;background-color: #333;color:#fff;font-weight:900;display:none}
+#playcontainer{position: fixed; z-index:10;bottom:300px; left:25px;display:none;}
+#audioticker{position: fixed; z-index:10;top:40px; left:25px; color:grey; font-size:1.1em;; border: 1 solid grey;}
+#stop{font-size:1.5em;opacity: 0.6; padding:6px 8px 6px 8px; margin:8px; cursor: pointer;background-color: #333;color:#fff;font-weight:900}
 #stop:hover {opacity:1}
 </style>
 
@@ -48,10 +49,13 @@ td{text-align:center; height:3.5em }
 <div id="step1">Place the audio file in the same folder as this html file, then choose it: <input type="file" id="audioinput" accept="audio/*"/></div>
 <div id="fileinfo"></div>
 <div id="step2">Choose the CSV file: <input type="file" id="fileinput" accept=".csv"/></div>
-<div id="controls"><audio id="audioplayer" src="" type="audio/mpeg" ></audio></div>
+<div id="controls"><audio id="audioplayer" src="" type="audio/mpeg" ontimeupdate="ticker(this.currentTime);" ></audio></div>
 </b>
 
 <div id="playcontainer" >
+<div id="audioticker">
+</div>
+<br>
 <div id="playpause">
 
 <a id="stop">PAUSE</a>
@@ -75,7 +79,7 @@ td{text-align:center; height:3.5em }
   var fragments=[];
   var currentno=0;
   var audiobj= document.getElementById('audioplayer');
-  var l = document.getElementById("stop");
+  var l = document.getElementById("playcontainer");
   var ainfo="";
   var cinfo="";
   var csvlines=[];
@@ -102,8 +106,9 @@ function loadAudio(evt) {
       var r = new FileReader();
       r.onload = function(e) { 
 		var contents = e.target.result;
+		contents=contents.replace(/\n$/, "");
 		var lines = contents.split("\n");
-		for (i=0; i<lines.length-1; i++){
+		for (i=0; i<lines.length; i++){
 			lines[i] = lines[i].split(",");
 			//get the text
 			var fragment=lines[i].slice(3);
@@ -122,7 +127,7 @@ function loadAudio(evt) {
 		document.getElementById('step2').style.display="none";
 		document.getElementById('saveanddownload').style.visibility="visible";
 		document.getElementById('fileinfo').innerHTML=ainfo+" "+cinfo;
-		for (i=0; i<lines.length-1; i++){
+		for (i=0; i<lines.length; i++){
 		document.getElementById(i).addEventListener("click", positionClick);
 		document.getElementById(i).nextSibling.addEventListener("click", increaseClick);
 		document.getElementById(i).nextSibling.nextSibling.addEventListener("click", decreaseClick);
@@ -181,7 +186,7 @@ function loadAudio(evt) {
 			
 			fileName = prompt("The file will be saved to your default download directory. Please enter a filename:", "updated.csv");
 			setTimeout(function(){
-			for (i=0; i<lines.length-1; i++){
+			for (i=0; i<lines.length; i++){
 				csvlines[i] = lines[i].join(",")
 			};
 			var data = csvlines.join("\n");
@@ -192,7 +197,7 @@ function loadAudio(evt) {
 		function downloadtsvClick(){
 			fileName = prompt("The file will be saved to your default download directory. Please enter a filename:", "updated.tsv");
 			setTimeout(function(){
-			for (i=0; i<lines.length-1; i++){
+			for (i=0; i<lines.length; i++){
 				tsvlines[i] = lines[i][1]+"\t"+lines[i][2]+"\t"+lines[i][0]
 			};
 			var data = tsvlines.join("\n");
@@ -206,6 +211,9 @@ function loadAudio(evt) {
       alert("Failed to load file");
     }
   
+}
+function ticker(cTime){
+	document.getElementById("audioticker").innerHTML = "current time: " +cTime.toFixed(2);
 }
 </script>
 </html>
