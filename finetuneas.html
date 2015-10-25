@@ -219,6 +219,8 @@
                     <option value="justify">Justify</option>
                 </select>
                 <hr style="display:block"/>
+                <label for="playbackRate" style="display:block">Playback rate:</label>
+                <input id="playbackRate" type="number" min="0.1" max="4.0" step="0.1" value="1.0" style="display:block"/> 
                 <label for="buttonOneFragment">Continuous playing:</label>
                 <button id="buttonOneFragment" style="display:block">OFF</button>
                 <label for="buttonTimeFormat" style="display:block">Time format:</label>
@@ -258,7 +260,6 @@ var audioElement = document.getElementById("audioplayer");
 var ainfo = "";
 var cinfo = "";
 var url;
-
 var timeFormatHHMMSSmmm = false;
 var alignText = "center";
 var oneFragment = true;
@@ -266,11 +267,9 @@ var timeStep = 0.1;
 var transitionOffset = 0.100;
 var transitionTimeout = 0.400;
 var showID = false;
-
 var COMPLETED = "lightgreen";
 var ACTIVE = "yellow";
 var CLEAR = "";
-
 try {
     document.getElementById("audioinput").addEventListener("change", buttonLoadAudio, false);
 } catch(e) {
@@ -286,7 +285,6 @@ try {
 } catch(e) {
     // pass
 }
-
 try {
     var audioref = "";
     // AENEAS_REPLACE_SMIL_AUDIOREF
@@ -297,7 +295,6 @@ try {
 } catch(e) {
     // pass
 }
-
 function buttonAutoLoad() {
     // fake
     var audioFilePath = "file:///tmp/audio.mp3";
@@ -331,7 +328,6 @@ function buttonAutoLoad() {
     prepareTable();
     prepareControls();
 }
-
 function buttonLoadAudio(evt) {
     var audioFile = evt.target.files[0];
     if (audioFile) {
@@ -344,11 +340,9 @@ function buttonLoadAudio(evt) {
         alert("Failed to load the audio file.");
     }
 }
-
 function loadAudio(audioFilePath) {
     audioElement.setAttribute("src", audioFilePath);
 }
-
 function buttonLoadJSON(evt) {
      var jsonFile = evt.target.files[0];
      if (jsonFile) {
@@ -357,7 +351,6 @@ function buttonLoadJSON(evt) {
         alert("Failed to load the JSON file.");
      }
 }
-
 function loadJSON(jsonFile) {
     var reader = new FileReader();
     reader.onload = function(e) { 
@@ -376,7 +369,6 @@ function loadJSON(jsonFile) {
     }
     reader.readAsText(jsonFile);
 }   
-
 function prepareControls() {
     // add event listeners
     for (var i = 0; i < fragments.length; i++) {
@@ -396,11 +388,11 @@ function prepareControls() {
     document.getElementById("buttonTimeFormat").addEventListener("click", changeTimeFormat);
     document.getElementById("timeStep").addEventListener("change", changeTimeStep);
     document.getElementById("transitionOffset").addEventListener("change", changeTransitionOffset);
+    document.getElementById("playbackRate").addEventListener("change", changePlaybackRate);
     document.getElementById("outputFormat").addEventListener("change", outputFormatChange, false);
     document.getElementById("download").addEventListener("click", downloadClick);
     document.getElementById("advancedcontrols").style.visibility = "visible";
 }
-
 function changeShowID() {
     showID = !showID;
     if (showID) {
@@ -412,18 +404,15 @@ function changeShowID() {
     prepareTable();
     prepareControls();
 }
-
 function changeAlignText() {
     alignText = document.getElementById("alignText").value;
     applyAlignment();
 }
-
 function applyAlignment() {
     for (var i = 0; i < fragments.length; i++) {
         document.getElementById(getStringID(i, "cell")).style.textAlign = alignText;
     }
 }
-
 function outputFormatChange() {
     var outputFormat = document.getElementById("outputFormat").value;
     var disp = "none";
@@ -433,15 +422,15 @@ function outputFormatChange() {
     document.getElementById("smilAudioRef").style.display = disp;
     document.getElementById("smilPageRef").style.display = disp;
 }
-
 function changeTimeStep() {
     timeStep = parseFloat(document.getElementById("timeStep").value);
 }
-
 function changeTransitionOffset() {
     transitionOffset = parseFloat(document.getElementById("transitionOffset").value);
 }
-
+function changePlaybackRate() {
+    audioElement.playbackRate = parseFloat(document.getElementById("playbackRate").value);
+}
 function changeOneFragment() {
     oneFragment = !oneFragment;
     var text = "ON";
@@ -450,7 +439,6 @@ function changeOneFragment() {
     }
     document.getElementById("buttonOneFragment").innerHTML = text;
 }
-
 function changeTimeFormat() {
     timeFormatHHMMSSmmm = !timeFormatHHMMSSmmm;
     var text = "DECIMAL";
@@ -460,7 +448,6 @@ function changeTimeFormat() {
     document.getElementById("buttonTimeFormat").innerHTML = text;
     updateTime();
 }
-
 function updateTime(i) {
     if (i == null) {
         for (var i = 0; i < fragments.length; i++) {
@@ -472,14 +459,12 @@ function updateTime(i) {
         document.getElementById(getStringID(i, "time")).innerHTML =  formatTime(begin);
     }
 }
-
 function formatTime(time_value) {
     if (timeFormatHHMMSSmmm) {
         return timeHHMMSSmmm(time_value, ".");
     }
     return time_value.toFixed(3);
 }
-
 function getStringID(i, element) {
     if (element == "id") {
         return ("id" + i);
@@ -511,14 +496,12 @@ function getID(idstring) {
     s = s.replace("f", "");
     return parseInt(s);
 }
-
 function roundTimeValues() {
     for (var i = 0; i < fragments.length; i++) {
         fragments[i].begin = roundTimeValue(fragments[i].begin);
         fragments[i].end = roundTimeValue(fragments[i].end);
     }
 }
-
 function prepareTable() {
     var rows = [];
     for (var i = 0; i < fragments.length; ++i) {
@@ -549,11 +532,9 @@ function prepareTable() {
     document.getElementById("tb").innerHTML = '<col width="250px">' + colID + '<col><col width="300px"><tbody>' + rows.join("") + "<\/tbody>";
     applyAlignment();
 }
-
 function roundTimeValue(time) {
     return Math.round(time * 1000) / 1000;
 }
-
 function highlight(style) {
     try {
         document.getElementById(getStringID(currentIndex, "cell")).style.backgroundColor = style;
@@ -561,21 +542,17 @@ function highlight(style) {
         // pass 
     }
 }
-
 function fragmentClick(evt) {
     highlight(CLEAR);
     currentIndex = getID(evt.target.id);
     playOverlay(0);
 }
-
 function increaseClick(evt) {
     changeTime(evt, timeStep);
 }
-
 function decreaseClick(evt) {
     changeTime(evt, -timeStep);
 }
-
 function changeTime(evt, step) {
     var i = getID(evt.target.id);
     fragments[i].begin = roundTimeValue(fragments[i].begin + step);
@@ -590,7 +567,6 @@ function changeTime(evt, step) {
     currentIndex = i;
     playOverlay(0);
 }
-
 function downloadData() {
     var aElement = document.createElement("a");
     aElement.style = "display: none";
@@ -603,7 +579,6 @@ function downloadData() {
         aElement.click();
     };
 }
-
 function triggerDownload(data, fileName) {
     setTimeout(function() {
         var df = downloadData();
@@ -611,7 +586,6 @@ function triggerDownload(data, fileName) {
     }, 500);
     window.URL.revokeObjectURL(url);
 }
-
 function downloadClick() {
     var outputFormat = document.getElementById("outputFormat").value;
     switch(outputFormat) {
@@ -649,7 +623,6 @@ function downloadClick() {
             downloadJSON();
     }   
 }
-
 function downloadCSV() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
@@ -659,7 +632,6 @@ function downloadCSV() {
     var fileName = prompt("The modified CSV file will be saved in your default Download directory. Please enter a file name:", "tuned.csv");
     triggerDownload(data, fileName); 
 }
-
 function downloadJSON() {
     var jsonData = {};
     jsonData.fragments = fragments;
@@ -674,7 +646,6 @@ function downloadJSON() {
     var fileName = prompt("The modified JSON file will be saved in your default Download directory. Please enter a file name:", "tuned.json");
     triggerDownload(data, fileName); 
 }
-
 function downloadSMIL() {
     var audioref = document.getElementById("smilAudioRef").value;
     var pageref = document.getElementById("smilPageRef").value;
@@ -696,7 +667,6 @@ function downloadSMIL() {
     var fileName = prompt("The modified SMIL file will be saved in your default Download directory. Please enter a file name:", "tuned.smil");
     triggerDownload(data, fileName); 
 }
-
 function downloadSRT() {
     var lines = [];
     var j = 0;
@@ -713,7 +683,6 @@ function downloadSRT() {
     var fileName = prompt("The modified SRT file will be saved in your default Download directory. Please enter a file name:", "tuned.srt");
     triggerDownload(data, fileName); 
 }
-
 function downloadSSV() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
@@ -723,7 +692,6 @@ function downloadSSV() {
     var fileName = prompt("The modified SSV file will be saved in your default Download directory. Please enter a file name:", "tuned.ssv");
     triggerDownload(data, fileName); 
 }
-
 function downloadTTML() {
     var lines = [];
     var j = 0;
@@ -741,7 +709,6 @@ function downloadTTML() {
     var fileName = prompt("The modified TTML file will be saved in your default Download directory. Please enter a file name:", "tuned.ttml");
     triggerDownload(data, fileName); 
 }
-
 function downloadTSV() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
@@ -751,7 +718,6 @@ function downloadTSV() {
     var fileName = prompt("The modified TSV file will be saved in your default Download directory. Please enter a file name:", "tuned.tsv");
     triggerDownload(data, fileName); 
 }
-
 function downloadTXT() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
@@ -761,7 +727,6 @@ function downloadTXT() {
     var fileName = prompt("The modified TXT file will be saved in your default Download directory. Please enter a file name:", "tuned.txt");
     triggerDownload(data, fileName); 
 }
-
 function downloadVTT() {
     var lines = [];
     var j = 0;
@@ -779,7 +744,6 @@ function downloadVTT() {
     var fileName = prompt("The modified VTT file will be saved in your default Download directory. Please enter a file name:", "tuned.vtt");
     triggerDownload(data, fileName); 
 }
-
 function downloadXML() {
     var lines = [];
     var j = 0;
@@ -798,7 +762,6 @@ function downloadXML() {
     var fileName = prompt("The modified XML file will be saved in your default Download directory. Please enter a file name:", "tuned.xml");
     triggerDownload(data, fileName); 
 }
-
 function pad(num, size) {
     var s = num + "";
     while (s.length < size) {
@@ -806,7 +769,6 @@ function pad(num, size) {
     }
     return s;
 }
-
 function timeHHMMSSmmm(time_value, decimal_separator) {
     var tmp = parseFloat(time_value);
     var hours = parseInt(Math.floor(tmp / 3600));
@@ -818,19 +780,15 @@ function timeHHMMSSmmm(time_value, decimal_separator) {
     var milliseconds = parseInt(Math.floor(tmp * 1000));
     return pad(hours, 2) + ":" + pad(minutes, 2) + ":" + pad(seconds, 2) + decimal_separator + pad(milliseconds, 3); 
 }
-
 function timeSMIL(time_value) { 
     return timeHHMMSSmmm(time_value, ".");
 }
-
 function timeSRT(time_value) { 
     return timeHHMMSSmmm(time_value, ",");
 }
-
 function timeVTT(time_value) { 
     return timeHHMMSSmmm(time_value, ".");
 }
-
 function ticker(cTime){
     
     // TODO ALPE use a global stopwatch object
@@ -861,12 +819,10 @@ function ticker(cTime){
     // display current time
     document.getElementById("audioticker").innerHTML = cTime.toFixed(3);
 }
-
 function stopOverlay() {
     audioElement.pause();
     document.getElementById("stop").style.display = "none";
 }
-
 function playOverlay(inc) {
     highlight(CLEAR);
     if (currentIndex + inc < fragments.length) { 
@@ -880,7 +836,6 @@ function playOverlay(inc) {
         stopOverlay();
     }
 }   
-
 </script>
 <!-- END script -->
 
