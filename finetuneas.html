@@ -182,7 +182,7 @@
                 <!-- do not remove the next line -->
                 <!-- AENEAS_REPLACE_UNCOMMENT_BEGIN
                 <div id="loadauto">
-                    <button id="buttonAutoLoad">Got it, let's start working!</button>
+                    <button id="buttonAutoLoad">Got it, let's start!</button>
                 </div>
                 AENEAS_REPLACE_UNCOMMENT_END -->
                 <!-- do not remove the line above -->
@@ -221,8 +221,8 @@
                 <hr style="display:block"/>
                 <label for="playbackRate" style="display:block">Playback rate:</label>
                 <input id="playbackRate" type="number" min="0.1" max="4.0" step="0.1" value="1.0" style="display:block"/> 
-                <label for="buttonOneFragment">Continuous playing:</label>
-                <button id="buttonOneFragment" style="display:block">OFF</button>
+                <label for="buttonContinuousPlay">Continuous play:</label>
+                <button id="buttonContinuousPlay" style="display:block">OFF</button>
                 <label for="buttonTimeFormat" style="display:block">Time format:</label>
                 <button id="buttonTimeFormat" style="display:block">DECIMAL</button>
                 <label for="transitionOffset" style="display:block">Transition offset (s):</label>
@@ -254,46 +254,95 @@
 
 <!-- BEGIN script -->
 <script type="text/javascript">
+//
+//
+// global variables and constants
+//
+//
 var fragments = [];
 var currentIndex = 0;
 var audioElement = document.getElementById("audioplayer");
 var ainfo = "";
 var cinfo = "";
 var url;
-var timeFormatHHMMSSmmm = false;
-var alignText = "center";
-var oneFragment = true;
-var timeStep = 0.1;
-var transitionOffset = 0.100;
-var transitionTimeout = 0.400;
-var showID = false;
 var COMPLETED = "lightgreen";
 var ACTIVE = "yellow";
 var CLEAR = "";
-try {
-    document.getElementById("audioinput").addEventListener("change", buttonLoadAudio, false);
-} catch(e) {
-    // pass
+var TRANSITION_TIMEOUT = 0.400;
+//
+//
+// variables that can be modified by the user at runtime
+//
+//
+// do not remove the following lines starting with AENEAS_REPLACE_
+//
+var timeStep = 0.1;
+// AENEAS_REPLACE_TIME_STEP
+var showID = false;
+// AENEAS_REPLACE_SHOW_ID
+var alignText = "center";
+// AENEAS_REPLACE_ALIGN_TEXT
+var playbackRate = 1.0;
+// AENEAS_REPLACE_PLAYBACK_RATE
+var continuousPlay = false;
+// AENEAS_REPLACE_CONTINUOUS_PLAY
+var timeFormatHHMMSSmmm = false;
+// AENEAS_REPLACE_TIME_FORMAT
+var transitionOffset = 0.100;
+// AENEAS_REPLACE_TRANSITION_OFFSET
+var outputFormat = "json";
+// AENEAS_REPLACE_OUTPUT_FORMAT
+var audioref = "";
+// AENEAS_REPLACE_SMIL_AUDIOREF
+var pageref = "";
+// AENEAS_REPLACE_SMIL_PAGEREF
+//
+// do not remove the lines above starting with AENEAS_REPLACE_
+//
+//
+// BEGIN INIT CODE
+//
+//
+bindEssentialListeners();
+applyDefaults();
+//
+//
+// END INIT CODE
+//
+//
+function bindEssentialListeners() {
+    try {
+        document.getElementById("audioinput").addEventListener("change", buttonLoadAudio, false);
+    } catch(e) {
+        // pass
+    }
+    try {
+        document.getElementById("fileinput").addEventListener("change", buttonLoadJSON, false);
+    } catch(e) {
+        // pass
+    }
+    try {
+        document.getElementById("buttonAutoLoad").addEventListener("click", buttonAutoLoad, false);
+    } catch(e) {
+        // pass
+    }
 }
-try {
-    document.getElementById("fileinput").addEventListener("change", buttonLoadJSON, false);
-} catch(e) {
-    // pass
-}
-try {
-    document.getElementById("buttonAutoLoad").addEventListener("click", buttonAutoLoad, false);
-} catch(e) {
-    // pass
-}
-try {
-    var audioref = "";
-    // AENEAS_REPLACE_SMIL_AUDIOREF
-    document.getElementById("smilAudioRef").value = audioref;
-    var pageref = "";
-    // AENEAS_REPLACE_SMIL_PAGEREF
-    document.getElementById("smilPageRef").value = pageref;
-} catch(e) {
-    // pass
+function applyDefaults() {
+    try {
+        document.getElementById("timeStep").value = timeStep;
+        setButtonText("buttonShowID", showID, "ON", "OFF");
+        document.getElementById("alignText").value = alignText;
+        document.getElementById("playbackRate").value = playbackRate;
+        setButtonText("buttonContinuousPlay", continuousPlay, "ON", "OFF");
+        setButtonText("buttonTimeFormat", timeFormatHHMMSSmmm, "HH:MM:SS.mmm", "DECIMAL");
+        document.getElementById("transitionOffset").value = transitionOffset;
+        document.getElementById("outputFormat").value = outputFormat;
+        document.getElementById("smilAudioRef").value = audioref;
+        document.getElementById("smilPageRef").value = pageref;
+        changeOutputFormat();
+    } catch(e) {
+        // pass
+    }
 }
 function buttonAutoLoad() {
     // fake
@@ -384,23 +433,18 @@ function prepareControls() {
     document.getElementById("stop").addEventListener("click", stopOverlay);
     document.getElementById("buttonShowID").addEventListener("click", changeShowID);
     document.getElementById("alignText").addEventListener("change", changeAlignText);
-    document.getElementById("buttonOneFragment").addEventListener("click", changeOneFragment);
+    document.getElementById("buttonContinuousPlay").addEventListener("click", changeContinuousPlay);
     document.getElementById("buttonTimeFormat").addEventListener("click", changeTimeFormat);
     document.getElementById("timeStep").addEventListener("change", changeTimeStep);
     document.getElementById("transitionOffset").addEventListener("change", changeTransitionOffset);
     document.getElementById("playbackRate").addEventListener("change", changePlaybackRate);
-    document.getElementById("outputFormat").addEventListener("change", outputFormatChange, false);
+    document.getElementById("outputFormat").addEventListener("change", changeOutputFormat, false);
     document.getElementById("download").addEventListener("click", downloadClick);
     document.getElementById("advancedcontrols").style.visibility = "visible";
 }
 function changeShowID() {
     showID = !showID;
-    if (showID) {
-        text = "ON";
-    } else {
-        text = "OFF";
-    }
-    document.getElementById("buttonShowID").innerHTML = text;
+    setButtonText("buttonShowID", showID, "ON", "OFF");
     prepareTable();
     prepareControls();
 }
@@ -413,7 +457,7 @@ function applyAlignment() {
         document.getElementById(getStringID(i, "cell")).style.textAlign = alignText;
     }
 }
-function outputFormatChange() {
+function changeOutputFormat() {
     var outputFormat = document.getElementById("outputFormat").value;
     var disp = "none";
     if (outputFormat == "smil") {
@@ -431,22 +475,21 @@ function changeTransitionOffset() {
 function changePlaybackRate() {
     audioElement.playbackRate = parseFloat(document.getElementById("playbackRate").value);
 }
-function changeOneFragment() {
-    oneFragment = !oneFragment;
-    var text = "ON";
-    if (oneFragment) {
-        text = "OFF";
-    }
-    document.getElementById("buttonOneFragment").innerHTML = text;
+function changeContinuousPlay() {
+    continuousPlay = !continuousPlay;
+    setButtonText("buttonContinuousPlay", continuousPlay, "ON", "OFF");
 }
 function changeTimeFormat() {
     timeFormatHHMMSSmmm = !timeFormatHHMMSSmmm;
-    var text = "DECIMAL";
-    if (timeFormatHHMMSSmmm) {
-        text = "HH:MM:SS.mmm";
-    }
-    document.getElementById("buttonTimeFormat").innerHTML = text;
+    setButtonText("buttonTimeFormat", timeFormatHHMMSSmmm, "HH:MM:SS.mmm", "DECIMAL");
     updateTime();
+}
+function setButtonText(element, variable, true_text, false_text) {
+    var text = false_text;
+    if (variable) {
+        text = true_text;
+    }
+    document.getElementById(element).innerHTML = text;
 }
 function updateTime(i) {
     if (i == null) {
@@ -588,49 +631,52 @@ function triggerDownload(data, fileName) {
 }
 function downloadClick() {
     var outputFormat = document.getElementById("outputFormat").value;
+    var data = null;
     switch(outputFormat) {
         case "csv":
-            downloadCSV();
+            data = downloadCSV();
             break;
         case "json":
-            downloadJSON();
+            data = downloadJSON();
             break;
         case "smil":
-            downloadSMIL();
+            data = downloadSMIL();
             break;
         case "srt":
-            downloadSRT();
+            data = downloadSRT();
             break;
         case "ssv":
-            downloadSSV();
+            data = downloadSSV();
             break;
         case "ttml":
-            downloadTTML();
+            data = downloadTTML();
             break;
         case "tsv":
-            downloadTSV();
+            data = downloadTSV();
             break;
         case "txt":
-            downloadTXT();
+            data = downloadTXT();
             break;
         case "vtt":
-            downloadVTT();
+            data = downloadVTT();
             break;
         case "xml":
-            downloadXML();
+            data = downloadXML();
             break;
         default:
-            downloadJSON();
-    }   
+            data = downloadJSON();
+    }
+    var message = "The modified " + outputFormat.toUpperCase() + " file will be saved in your default Download directory. Please enter a file name:";
+    var suggestedFileName = "tuned." + outputFormat;
+    var fileName = prompt(message, suggestedFileName);
+    triggerDownload(data, fileName);
 }
 function downloadCSV() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
         lines[i] = fragments[i].id + "," + fragments[i].begin + "," + fragments[i].end + ',"' + fragments[i].lines.join(" ") + '"';
     };
-    var data = lines.join("\n");
-    var fileName = prompt("The modified CSV file will be saved in your default Download directory. Please enter a file name:", "tuned.csv");
-    triggerDownload(data, fileName); 
+    return lines.join("\n");
 }
 function downloadJSON() {
     var jsonData = {};
@@ -642,9 +688,7 @@ function downloadJSON() {
         }
         return value;
     }
-    var data = JSON.stringify(jsonData, numberToString, " ");
-    var fileName = prompt("The modified JSON file will be saved in your default Download directory. Please enter a file name:", "tuned.json");
-    triggerDownload(data, fileName); 
+    return JSON.stringify(jsonData, numberToString, " ");
 }
 function downloadSMIL() {
     var audioref = document.getElementById("smilAudioRef").value;
@@ -663,9 +707,7 @@ function downloadSMIL() {
     lines[j++] = '    <\/seq>';
     lines[j++] = '  <\/body>';
     lines[j++] = '<\/smil>';
-    var data = lines.join("\n");
-    var fileName = prompt("The modified SMIL file will be saved in your default Download directory. Please enter a file name:", "tuned.smil");
-    triggerDownload(data, fileName); 
+    return lines.join("\n");
 }
 function downloadSRT() {
     var lines = [];
@@ -679,18 +721,14 @@ function downloadSRT() {
         }
         lines[j++] = ""
     };
-    var data = lines.join("\n") + "\n";
-    var fileName = prompt("The modified SRT file will be saved in your default Download directory. Please enter a file name:", "tuned.srt");
-    triggerDownload(data, fileName); 
+    return lines.join("\n") + "\n";
 }
 function downloadSSV() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
         lines[i] = fragments[i].begin + " " + fragments[i].end + " " + fragments[i].id + ' "' + fragments[i].lines.join(" ") + '"';
     };
-    var data = lines.join("\n");
-    var fileName = prompt("The modified SSV file will be saved in your default Download directory. Please enter a file name:", "tuned.ssv");
-    triggerDownload(data, fileName); 
+    return lines.join("\n");
 }
 function downloadTTML() {
     var lines = [];
@@ -705,27 +743,21 @@ function downloadTTML() {
     lines[j++] = '    <\/div>';
     lines[j++] = '  <\/body>';
     lines[j++] = '<\/tt>';
-    var data = lines.join("\n");
-    var fileName = prompt("The modified TTML file will be saved in your default Download directory. Please enter a file name:", "tuned.ttml");
-    triggerDownload(data, fileName); 
+    return lines.join("\n");
 }
 function downloadTSV() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
         lines[i] = fragments[i].begin + "\t" + fragments[i].end + "\t" + fragments[i].id;
     };
-    var data = lines.join("\n");
-    var fileName = prompt("The modified TSV file will be saved in your default Download directory. Please enter a file name:", "tuned.tsv");
-    triggerDownload(data, fileName); 
+    return lines.join("\n");
 }
 function downloadTXT() {
     var lines = [];
     for (var i = 0; i < fragments.length; ++i) {
         lines[i] = fragments[i].id + " " + fragments[i].begin + " " + fragments[i].end + ' "' + fragments[i].lines.join(" ") + '"';
     };
-    var data = lines.join("\n");
-    var fileName = prompt("The modified TXT file will be saved in your default Download directory. Please enter a file name:", "tuned.txt");
-    triggerDownload(data, fileName); 
+    return lines.join("\n");
 }
 function downloadVTT() {
     var lines = [];
@@ -740,9 +772,7 @@ function downloadVTT() {
         }
         lines[j++] = ""
     };
-    var data = lines.join("\n") + "\n";
-    var fileName = prompt("The modified VTT file will be saved in your default Download directory. Please enter a file name:", "tuned.vtt");
-    triggerDownload(data, fileName); 
+    return lines.join("\n") + "\n";
 }
 function downloadXML() {
     var lines = [];
@@ -758,9 +788,7 @@ function downloadXML() {
         lines[j++] = '  <\/fragment>';
     };
     lines[j++] = '<\/map>';
-    var data = lines.join("\n");
-    var fileName = prompt("The modified XML file will be saved in your default Download directory. Please enter a file name:", "tuned.xml");
-    triggerDownload(data, fileName); 
+    return lines.join("\n");
 }
 function pad(num, size) {
     var s = num + "";
@@ -797,21 +825,21 @@ function ticker(cTime){
     // to pause exactly at the end of the fragment.
     // Another option is to use temporal dimensions
     // for audio source but Chrome doesn't support it with blobs.
-    // If in the last transitionTimeout seconds, calculate the time left,
+    // If in the last TRANSITION_TIMEOUT seconds, calculate the time left,
     // and set a corresponding timeout to pause the fragment.
-    if(cTime > fragments[currentIndex].end - transitionTimeout) {
+    if(cTime > fragments[currentIndex].end - TRANSITION_TIMEOUT) {
         // subtract transitionOffset seconds to account for the delay introduced by this code
-        var timeLeft = (fragments[currentIndex].end - cTime - transitionOffset) * 1000;
+        var timeLeft = (fragments[currentIndex].end - cTime - transitionOffset) * 1000 / audioElement.playbackRate;
         var index = currentIndex;
         setTimeout(function() {
             // do not perform action if the user
             // jumped to another fragment
             if (index == currentIndex) {
-                if (oneFragment) {
+                if (continuousPlay) {
+                    playOverlay(1);
+                } else {
                     highlight(COMPLETED);
                     stopOverlay();
-                } else {
-                    playOverlay(1);
                 }
             }
         }, timeLeft)
