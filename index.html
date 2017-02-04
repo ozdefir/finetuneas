@@ -380,7 +380,7 @@ function buttonAutoLoad() {
 function buttonLoadAudio(evt) {
     var audioFile = evt.target.files[0];
     if (audioFile) {
-        readBinaryStringFromBlob(audioFile, catchXingHeader)
+        // readBinaryStringFromBlob(audioFile, catchXingHeader)
         function catchXingHeader(binary) {		
             console.log(binary.slice(0,1000));
             xingMatch = binary.match(/(Info|Xing)\x00\x00\x00/);
