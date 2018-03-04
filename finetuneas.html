@@ -4,8 +4,6 @@
 <head>
     <title>finetuneas, an HTML interface for fine tuning aeneas sync maps</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-
     <link rel="stylesheet" href="finetuneas.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -90,8 +88,10 @@
                 <label for="transitionOffset" style="display:block">Transition offset (s):</label>
                 <input id="transitionOffset" type="number" min="0" max="0.400" step="0.010" value="0.100"
                        style="display:block"/>
+                <label for="playWindowTime" style="display:block">Play window time (s):</label>
                 <input id="playWindowTime" type="number" min="0.1" max="100" step="0.10" value="2.0"
-                       style="display:block"/>
+                       style="display:inline-block"/>
+                <button class="btn btn-primary btn-sm" id="buttonPlayWindow" style="display:inline-block">OFF</button>
                 <hr style="display:block"/>
                 <label for="outputFormat" style="display:block">Format:</label>
                 <select name="outputFormat" id="outputFormat" style="display:block">
@@ -108,7 +108,7 @@
                 </select>
                 <input id="smilAudioRef" style="display:none" type="text" placeholder="audio_ref"/>
                 <input id="smilPageRef" style="display:none" type="text" placeholder="page_ref"/>
-                <button class="btn btn-primary btn-sm" id="download" style="display:block">Save</button>
+                <button class="btn btn-primary btn-sm" id="download" style="display:block;margin-top:5px;margin-bottom:5px;">Save</button>
             </div>
         </div>
         <div class="col-sm">
@@ -137,7 +137,7 @@
     var cinfo = "";
     var url;
     var COMPLETED = "lightgreen";
-    var ACTIVE = "yellow";
+    var ACTIVE = "#c5c7dc";
     var CLEAR = "";
     var TRANSITION_TIMEOUT = 0.400;
     /*
@@ -166,10 +166,12 @@
     var audioref = "";
     // AENEAS_REPLACE_SMIL_AUDIOREF
     var pageref = "";
-
-    var playWindowTime = 2.0;
-
     // AENEAS_REPLACE_SMIL_PAGEREF
+    var playWindowTime = 2.0;
+    // AENEAS_REPLACE_PLAY_WINDOW_TIME
+    var playWindow = false;
+    // AENEAS_REPLACE_PLAY_WINDOW
+
     /*
      do not remove the lines above starting with AENEAS_REPLACE_
     */
@@ -214,6 +216,8 @@
             document.getElementById("smilAudioRef").value = audioref;
             document.getElementById("smilPageRef").value = pageref;
             document.getElementById("playWindowTime").value = playWindowTime;
+            setButtonText("buttonPlayWindow", playWindow, "ON", "OFF");
+
 
             changeOutputFormat();
         } catch (e) {
@@ -346,7 +350,7 @@
             loadAudio(audioFilePath);
             ainfo = "[Audio file: \"" + audioFile.name + "\"]";
             document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;
-            document.getElementById("step1").style.display = "none";
+            /*document.getElementById("step1").style.display = "none";*/
         } else {
             alert("Failed to load the audio file.");
         }
@@ -378,7 +382,7 @@
             prepareTable();
             prepareControls();
             cinfo = "[JSON file: \"" + jsonFile.name + "\"]";
-            document.getElementById("step2").style.display = "none";
+            /*document.getElementById("step2").style.display = "none";*/
             document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;
         };
         reader.readAsText(jsonFile);
@@ -408,10 +412,11 @@
         document.getElementById("buttonTimeFormat").addEventListener("click", changeTimeFormat);
         document.getElementById("timeStep").addEventListener("change", changeTimeStep);
         document.getElementById("transitionOffset").addEventListener("change", changeTransitionOffset);
+        document.getElementById("buttonPlayWindow").addEventListener("click", changePlayWindow);
+        document.getElementById("playWindowTime").addEventListener("change", changePlayWindowTime);
         document.getElementById("playbackRate").addEventListener("change", changePlaybackRate);
         document.getElementById("outputFormat").addEventListener("change", changeOutputFormat, false);
         document.getElementById("download").addEventListener("click", downloadClick);
-        document.getElementById("advancedcontrols").style.visibility = "visible";
     }
 
     function changeShowID() {
@@ -457,6 +462,16 @@
     function changeContinuousPlay() {
         continuousPlay = !continuousPlay;
         setButtonText("buttonContinuousPlay", continuousPlay, "ON", "OFF");
+    }
+
+    function changePlayWindow() {
+        playWindow = !playWindow;
+        setButtonText("buttonPlayWindow", playWindow, "ON", "OFF");
+    }
+
+    function changePlayWindowTime() {
+        playWindowTime = parseFloat(document.getElementById("playWindowTime").value);
+
     }
 
     function changeTimeFormat() {
@@ -618,9 +633,6 @@
             if (fragments[i].begin < 0) {
                 fragments[i].begin = 0.00;
             }
-            /*if (i > 0) {
-                fragments[i - 1].end = fragments[i].begin;
-            }*/
             updateTime(i, "begin");
             highlight(CLEAR);
             currentIndex = i;
@@ -878,6 +890,16 @@
         // for audio source but Chrome doesn't support it with blobs.
         // If in the last TRANSITION_TIMEOUT seconds, calculate the time left,
         // and set a corresponding timeout to pause the fragment.
+
+        /* playWindowTime lets the user listen to only part of the sentence, beginning and end
+        * for quicker annotations */
+        if (playWindow === true && (fragments[currentIndex].end - fragments[currentIndex].begin) > (playWindowTime * 2)) {
+            if ((cTime > fragments[currentIndex].begin + playWindowTime) && (cTime < fragments[currentIndex].end - playWindowTime)) {
+                audioElement.currentTime = fragments[currentIndex].end - playWindowTime;
+                audioElement.play();
+            }
+        }
+
         if (cTime > fragments[currentIndex].end - TRANSITION_TIMEOUT) {
             // subtract transitionOffset seconds to account for the delay introduced by this code
             var timeLeft = (fragments[currentIndex].end - cTime - transitionOffset) * 1000 / audioElement.playbackRate;
@@ -904,7 +926,6 @@
 
     function stopOverlay() {
         audioElement.pause();
-        /*document.getElementById("stop").style.display = "none";*/
     }
 
     function playOverlay(inc) {
@@ -914,8 +935,6 @@
             highlight(ACTIVE);
             audioElement.currentTime = fragments[currentIndex].begin;
             audioElement.play();
-            /*document.getElementById("audiocontrols").style.display = "block";*/
-            /*document.getElementById("stop").style.display = "inline";*/
         } else {
             stopOverlay();
         }
