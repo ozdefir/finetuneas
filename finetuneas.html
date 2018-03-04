@@ -4,115 +4,132 @@
 <head>
     <title>finetuneas, an HTML interface for fine tuning aeneas sync maps</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
     <link rel="stylesheet" href="finetuneas.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 </head>
 
 <body>
 <!-- BEGIN container -->
-<div id="container">
+<div class="container-fluid">
     <!-- BEGIN directions -->
-    <div id="directions">
-        <p class="heading"><b>finetuneas</b></p>
-        <p class="normal"><b>1.</b> Before you start making adjustments, check several fragments at random to be sure
-            that the sync map is mostly correct and it just needs fine tuning. If not, check your <i>aeneas</i> input
-            files and parameters and run <i>aeneas</i> again.</p>
-        <p class="normal"><b>2.</b> To check the begin time of each fragment, click on the corresponding text or
-            timestamp. If necessary, use the <b>+</b> and <b>−</b> buttons to adjust it.</p>
-        <p class="normal"><b>3.</b> When done, you can save the adjusted sync map to file. If the desired format is not
-            available, choose JSON and then use the <i>aeneas.tools.convert_syncmap</i> tool to convert it.</p>
-        <!-- BEGIN loadbuttons -->
-        <!-- do not remove the next line -->
-        <!-- AENEAS_REPLACE_COMMENT_BEGIN -->
-        <div id="loadbuttons">
-            <p class="normal"><b>4.</b> To start working, select your audio and JSON files:</p>
-            <div id="step1">Audio file:
-                <input type="file" id="audioinput" accept="audio/*" autocomplete="off"/>
+    <div class="row b-header">
+        <div class="col-sm">
+            <i class="fa fa-navicon fa-lg sidebar-menu"></i>
+            <p class="logo-text">finetuneas</p>
+            <!-- BEGIN player -->
+            <div id="player">
+                <audio id="audioplayer" src="" ontimeupdate="ticker(this.currentTime);"></audio>
             </div>
-            <div id="fileinfo"></div>
-            <div id="step2">JSON file:
-                <input type="file" id="fileinput" accept=".json" autocomplete="off"/>
+
+            <div style="display:inline-block;">
+                <div class="progress" style="height: 5px;width:100px;">
+                    <div id="playerprogress" class="progress-bar" role="progressbar" style="width:0%;"></div>
+                </div>
             </div>
+
+            <div id="audiocontrols">
+                <span id="audioticker"></span>
+                <a class="pause" id="stop">ıı</a>
+            </div>
+            <!-- END player -->
+
+            <!-- BEGIN loadbuttons -->
+            <!-- do not remove the next line -->
+            <!-- AENEAS_REPLACE_COMMENT_BEGIN -->
+            <div id="step1" style="display:inline;">
+                <p class="file-label">Audio:</p>
+                <input type="file" id="audioinput" accept="audio/*" autocomplete="off" style="width:250px;"/>
+            </div>
+            <!--<div id="fileinfo"></div>-->
+            <div id="step2" style="display:inline;">
+                <p class="file-label">JSON:</p>
+                <input type="file" id="fileinput" accept=".json" autocomplete="off" style="width:250px;"/>
+            </div>
+            <!-- AENEAS_REPLACE_COMMENT_END -->
+            <!-- do not remove the line above -->
+            <!-- END loadbuttons -->
+            <!-- BEGIN loadauto -->
+            <!-- do not remove the next line -->
+            <!-- AENEAS_REPLACE_UNCOMMENT_BEGIN
+        <div id="loadauto">
+            <button id="buttonAutoLoad">Got it, let's start!</button>
         </div>
-        <!-- AENEAS_REPLACE_COMMENT_END -->
-        <!-- do not remove the line above -->
-        <!-- END loadbuttons -->
-        <!-- BEGIN loadauto -->
-        <!-- do not remove the next line -->
-        <!-- AENEAS_REPLACE_UNCOMMENT_BEGIN
-            <div id="loadauto">
-                <button id="buttonAutoLoad">Got it, let's start!</button>
-            </div>
-            AENEAS_REPLACE_UNCOMMENT_END -->
-        <!-- do not remove the line above -->
-        <!-- END loadauto -->
+        AENEAS_REPLACE_UNCOMMENT_END -->
+            <!-- do not remove the line above -->
+            <!-- END loadauto -->
+        </div>
     </div>
     <!-- END directions -->
-    <!-- BEGIN player -->
-    <div id="player">
-        <audio id="audioplayer" src="" ontimeupdate="ticker(this.currentTime);"></audio>
+    <div class="row b-content">
+        <div class="col-3">
+            <div class="settings">
+                <label for="timeStep" style="display:block">Time increment (s):</label>
+                <input id="timeStep" type="number" min="0.010" step="0.010" value="0.100" style="display:block"/>
+                <label for="buttonShowID" style="display:block">Show ID:</label>
+                <button class="btn btn-primary btn-sm" id="buttonShowID" style="display:block">OFF</button>
+                <label for="alignText" style="display:block">Text alignment:</label>
+                <select name="alignText" id="alignText" style="display:block">
+                    <option value="left">Left</option>
+                    <option value="center" selected="selected">Center</option>
+                    <option value="right">Right</option>
+                    <option value="justify">Justify</option>
+                </select>
+                <hr style="display:block"/>
+                <label for="playbackRate" style="display:block">Playback rate:</label>
+                <input id="playbackRate" type="number" min="0.1" max="4.0" step="0.1" value="1.0"
+                       style="display:block"/>
+                <label for="buttonContinuousPlay">Continuous play:</label>
+                <button class="btn btn-primary btn-sm" id="buttonContinuousPlay" style="display:block">OFF</button>
+                <label for="buttonTimeFormat" style="display:block">Time format:</label>
+                <button class="btn btn-primary btn-sm" id="buttonTimeFormat" style="display:block">DECIMAL</button>
+                <label for="transitionOffset" style="display:block">Transition offset (s):</label>
+                <input id="transitionOffset" type="number" min="0" max="0.400" step="0.010" value="0.100"
+                       style="display:block"/>
+                <input id="playWindowTime" type="number" min="0.1" max="100" step="0.10" value="2.0"
+                       style="display:block"/>
+                <hr style="display:block"/>
+                <label for="outputFormat" style="display:block">Format:</label>
+                <select name="outputFormat" id="outputFormat" style="display:block">
+                    <option value="csv">CSV</option>
+                    <option value="json" selected="selected">JSON</option>
+                    <option value="smil">SMIL</option>
+                    <option value="srt">SRT</option>
+                    <option value="ssv">SSV</option>
+                    <option value="ttml">TTML</option>
+                    <option value="tsv">TSV</option>
+                    <option value="txt">TXT</option>
+                    <option value="vtt">VTT</option>
+                    <option value="xml">XML</option>
+                </select>
+                <input id="smilAudioRef" style="display:none" type="text" placeholder="audio_ref"/>
+                <input id="smilPageRef" style="display:none" type="text" placeholder="page_ref"/>
+                <button class="btn btn-primary btn-sm" id="download" style="display:block">Save</button>
+            </div>
+        </div>
+        <div class="col-sm">
+            <div id="fragments">
+                <div id="tb" class="tg"></div>
+            </div>
+        </div>
     </div>
-    <!-- END player -->
-    <div id="audiocontrols">
-        <span id="audioticker"></span>
-        <span id="playpause"><a id="stop">ıı</a></span>
-    </div>
-    <div id="fragments">
-        <table id="tb" class="tg table"></table>
-    </div>
-    <div id="advancedcontrols">
-        <label for="timeStep" style="display:block">Time increment (s):</label>
-        <input id="timeStep" type="number" min="0.010" step="0.010" value="0.100" style="display:block"/>
-        <label for="buttonShowID" style="display:block">Show ID:</label>
-        <button class="btn btn-primary btn-sm" id="buttonShowID" style="display:block">OFF</button>
-        <label for="alignText" style="display:block">Text alignment:</label>
-        <select name="alignText" id="alignText" style="display:block">
-            <option value="left">Left</option>
-            <option value="center" selected="selected">Center</option>
-            <option value="right">Right</option>
-            <option value="justify">Justify</option>
-        </select>
-        <hr style="display:block"/>
-        <label for="playbackRate" style="display:block">Playback rate:</label>
-        <input id="playbackRate" type="number" min="0.1" max="4.0" step="0.1" value="1.0" style="display:block"/>
-        <label for="buttonContinuousPlay">Continuous play:</label>
-        <button class="btn btn-primary btn-sm" id="buttonContinuousPlay" style="display:block">OFF</button>
-        <label for="buttonTimeFormat" style="display:block">Time format:</label>
-        <button class="btn btn-primary btn-sm" id="buttonTimeFormat" style="display:block">DECIMAL</button>
-        <label for="transitionOffset" style="display:block">Transition offset (s):</label>
-        <input id="transitionOffset" type="number" min="0" max="0.400" step="0.010" value="0.100"
-               style="display:block"/>
-        <hr style="display:block"/>
-        <label for="outputFormat" style="display:block">Format:</label>
-        <select name="outputFormat" id="outputFormat" style="display:block">
-            <option value="csv">CSV</option>
-            <option value="json" selected="selected">JSON</option>
-            <option value="smil">SMIL</option>
-            <option value="srt">SRT</option>
-            <option value="ssv">SSV</option>
-            <option value="ttml">TTML</option>
-            <option value="tsv">TSV</option>
-            <option value="txt">TXT</option>
-            <option value="vtt">VTT</option>
-            <option value="xml">XML</option>
-        </select>
-        <input id="smilAudioRef" style="display:none" type="text" placeholder="audio_ref"/>
-        <input id="smilPageRef" style="display:none" type="text" placeholder="page_ref"/>
-        <button class="btn btn-primary btn-sm" id="download" style="display:block">Save</button>
-    </div>
-    <div class="footer">
+
+
+    <!--<div class="footer b-footer">
         <a href="https://github.com/ozdefir/finetuneas">finetuneas v1.0.2</a>
         <br/>© 2015 Firat Özdemir
-    </div>
+    </div>-->
 </div>
 <!-- END container -->
 <!-- BEGIN script -->
 <script type="text/javascript">
     /*
-     global variables and constants
-    */
+                         global variables and constants
+                        */
     var fragments = [];
     var currentIndex = 0;
     var audioElement = document.getElementById("audioplayer");
@@ -149,6 +166,9 @@
     var audioref = "";
     // AENEAS_REPLACE_SMIL_AUDIOREF
     var pageref = "";
+
+    var playWindowTime = 2.0;
+
     // AENEAS_REPLACE_SMIL_PAGEREF
     /*
      do not remove the lines above starting with AENEAS_REPLACE_
@@ -193,6 +213,8 @@
             document.getElementById("outputFormat").value = outputFormat;
             document.getElementById("smilAudioRef").value = audioref;
             document.getElementById("smilPageRef").value = pageref;
+            document.getElementById("playWindowTime").value = playWindowTime;
+
             changeOutputFormat();
         } catch (e) {
             // pass
@@ -451,7 +473,7 @@
         document.getElementById(element).innerHTML = text;
     }
 
-    function updateTimeForSegment(segment_position="begin") {
+    function updateTimeForSegment(segment_position = "begin") {
         if (i == null) {
             for (var i = 0; i < fragments.length; i++) {
                 var position = fragments[i][segment_position];
@@ -464,7 +486,7 @@
     }
 
 
-    function updateTime(i, segment_position="begin") {
+    function updateTime(i, segment_position = "begin") {
         if (segment_position === "begin") {
             updateTimeForSegment("begin")
         } else {
@@ -479,8 +501,7 @@
         return time_value.toFixed(3);
     }
 
-    function getStringID(i, element, segment_position="begin") {
-        console.log(segment_position);
+    function getStringID(i, element, segment_position = "begin") {
         if (element == "id") {
             return ("id" + i);
         }
@@ -530,36 +551,36 @@
             var begin = fragments[i].begin;
             var end = fragments[i].end;
             var row = "";
-            row += '<tr>';
-            row += '<\/tr>';
-            row += "<td><\/td>";
+            row += '<div class="row" style="padding-top:5px;padding-bottom:5px;border-bottom:1px solid #e2e3ed;margin-left:15px;margin-right:15px;">';
             if (showID) {
-                row += '<td id="' + getStringID(i, "id") + '">' + id + '<\/td>';
+                row += '<div class="col-2" id="' + getStringID(i, "id") + '">' + id + '<\/div>';
             }
-            row += '<td id="' + getStringID(i, "cell") + '"><a class="text" id="' + getStringID(i, "text") + '">' + text + '<\/a><\/td>';
-            row += '<td class="edit">';
+            row += '<div class="col" style="display: table-cell; vertical-align: middle;" id="' + getStringID(i, "cell") + '"><a class="text" id="' + getStringID(i, "text") + '">' + text + '<\/a><\/div>';
+            row += '<div class="edit col-4">';
 
-            row += '<div style="display:block;">';
+            row += '<div style="display:block;margin-bottom:10px;">';
+            row += '<p style="display:inline;" class="adjust-label">Start</p>';
             row += '<a class="time" id="' + getStringID(i, "time", "begin") + '">' + formatTime(begin) + '<\/a>';
             row += '<a class="increase" id="' + getStringID(i, "increase", "begin") + '">+<\/a>';
             row += '<a class="decrease" id="' + getStringID(i, "decrease", "begin") + '">−<\/a>';
             row += '</div>';
 
             row += '<div style="display:block;">';
+            row += '<p style="display:inline;" class="adjust-label">End</p>';
             row += '<a class="time" id="' + getStringID(i, "time", "end") + '">' + formatTime(end) + '<\/a>';
             row += '<a class="increase" id="' + getStringID(i, "increase", "end") + '">+<\/a>';
             row += '<a class="decrease" id="' + getStringID(i, "decrease", "end") + '">−<\/a>';
             row += '</div>';
 
-            row += "<\/td>";
-            row += '<\/tr>';
+            row += "<\/div>";
+            row += '<\/div>';
             rows[i] = row;
         }
         var colID = "";
         if (showID) {
             colID = '<col width="100">';
         }
-        document.getElementById("tb").innerHTML = '<col width="250px">' + colID + '<col><col width="300px"><tbody>' + rows.join("") + "<\/tbody>";
+        document.getElementById("tb").innerHTML = '<div>' + rows.join("") + "<\/div>";
         applyAlignment();
     }
 
@@ -591,7 +612,6 @@
 
     function changeTime(evt, step) {
         var i = getID(evt.target.id);
-        console.log("target", evt.target.id);
         if (evt.target.id.indexOf("begin") > -1) {
             /* increase/decrease begin*/
             fragments[i].begin = roundTimeValue(fragments[i].begin + step);
@@ -850,7 +870,6 @@
     }
 
     function ticker(cTime) {
-
         // TODO ALPE use a global stopwatch object
 
         // "timeupdate" alone isn't accurate enough
@@ -877,12 +896,15 @@
             }, timeLeft)
         }
         // display current time
+        var percentageCompleted = ((cTime.toFixed(3)-fragments[currentIndex].begin) / (fragments[currentIndex].end - fragments[currentIndex].begin)) * 100;
         document.getElementById("audioticker").innerHTML = cTime.toFixed(3);
+        document.getElementById("playerprogress").style.width = percentageCompleted.toString() + "%";
+
     }
 
     function stopOverlay() {
         audioElement.pause();
-        document.getElementById("stop").style.display = "none";
+        /*document.getElementById("stop").style.display = "none";*/
     }
 
     function playOverlay(inc) {
@@ -892,8 +914,8 @@
             highlight(ACTIVE);
             audioElement.currentTime = fragments[currentIndex].begin;
             audioElement.play();
-            document.getElementById("audiocontrols").style.display = "block";
-            document.getElementById("stop").style.display = "inline";
+            /*document.getElementById("audiocontrols").style.display = "block";*/
+            /*document.getElementById("stop").style.display = "inline";*/
         } else {
             stopOverlay();
         }
