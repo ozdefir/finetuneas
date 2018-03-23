@@ -2,6 +2,9 @@
 
 **finetuneas** is a simple HTML interface for fine tuning sync maps output by [aeneas](https://github.com/readbeyond/aeneas)
 
+![alt text](https://github.com/klintan/finetuneas/raw/master/screenshot.png "Finetuneas screenshot")
+
+
 ## Usage
 
 1. Before you start making adjustments, check several fragments at random to be sure that the sync map is mostly correct and it just needs fine tuning. If not, check your `aeneas` input files and parameters and run `aeneas` again.
