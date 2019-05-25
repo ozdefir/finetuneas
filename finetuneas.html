@@ -67,6 +67,8 @@
             <div class="settings">
                 <label for="timeStep" style="display:block">Time increment (s):</label>
                 <input id="timeStep" type="number" min="0.010" step="0.010" value="0.100" style="display:block"/>
+                <label for="couple" style="display:block">Couple ends/starts:</label>
+                <button class="btn btn-primary btn-sm" id="couple" style="display:block">OFF</button>
                 <label for="buttonShowID" style="display:block">Show ID:</label>
                 <button class="btn btn-primary btn-sm" id="buttonShowID" style="display:block">OFF</button>
                 <label for="alignText" style="display:block">Text alignment:</label>
@@ -148,6 +150,8 @@
     */
     var timeStep = 0.1;
     // AENEAS_REPLACE_TIME_STEP
+    var couple = true;
+    // AENEAS_REPLACE_COUPLE
     var showID = false;
     // AENEAS_REPLACE_SHOW_ID
     var alignText = "center";
@@ -205,6 +209,7 @@
     function applyDefaults() {
         try {
             document.getElementById("timeStep").value = timeStep;
+            setButtonText("couple", couple, "ON", "OFF");
             setButtonText("buttonShowID", showID, "ON", "OFF");
             document.getElementById("alignText").value = alignText;
             document.getElementById("playbackRate").value = playbackRate;
@@ -345,6 +350,22 @@
     function buttonLoadAudio(evt) {
         var audioFile = evt.target.files[0];
         if (audioFile) {
+        
+            readBinaryStringFromBlob(audioFile, catchXingHeader);
+            console.log(audioFile);
+            function catchXingHeader(binary) {		
+                console.log(binary.slice(0,1000));
+                xingMatch = binary.match(/(Info|Xing)\x00\x00\x00/);
+                if(xingMatch){
+                    if(xingMatch[1]=='Xing'){
+                        alert('Your audio file seems to have variable bitrate. You should convert it to constant bitrate (with iTunes etc), otherwise it\'s meaningless to use this tool.');
+                    }
+                    if(xingMatch[1]=='Info' && navigator.userAgent.indexOf("Chrome")===-1){
+                        alert('We strongly recommend that you use Google Chrome (because you seem to have the imprecise \'Xing\' seek tables in your CBR encoded MP3 file which are used by browsers other than Chrome).');
+                    }
+                }
+            };
+
             var audioFilePath = URL.createObjectURL(audioFile);
             loadAudio(audioFilePath);
             ainfo = "[Audio file: \"" + audioFile.name + "\"]";
@@ -405,6 +426,7 @@
             document.getElementById(getStringID(i, "decrease", "end")).addEventListener("click", decreaseClick);
         }
         document.getElementById("stop").addEventListener("click", stopOverlay);
+        document.getElementById("couple").addEventListener("click", changeCouple);
         document.getElementById("buttonShowID").addEventListener("click", changeShowID);
         document.getElementById("alignText").addEventListener("change", changeAlignText);
         document.getElementById("buttonContinuousPlay").addEventListener("click", changeContinuousPlay);
@@ -423,6 +445,11 @@
         setButtonText("buttonShowID", showID, "ON", "OFF");
         prepareTable();
         prepareControls();
+    }
+
+    function changeCouple() {
+        couple = !couple;
+        setButtonText("couple", couple, "ON", "OFF");
     }
 
     function changeAlignText() {
@@ -633,6 +660,10 @@
                 fragments[i].begin = 0.00;
             }
             updateTime(i, "begin");
+            if (couple && (i > 0)) {
+                fragments[i - 1].end = fragments[i].begin;
+                updateTime(i-1, "end");
+            }           
             highlight(CLEAR);
             currentIndex = i;
             playOverlay(0);
@@ -642,10 +673,11 @@
             if (fragments[i].end < 0) {
                 fragments[i].end = 0.00;
             }
-            /*if (i > 0) {
-                fragments[i - 1].end = fragments[i].begin;
-            }*/
             updateTime(i, "end");
+            if (couple && (i+1 < fragments.length)) {
+                fragments[i+1].begin = fragments[i].end;
+                updateTime(i+1, "begin");
+            }
             highlight(CLEAR);
             currentIndex = i;
             playOverlay(0);
@@ -936,6 +968,46 @@
             audioElement.play();
         } else {
             stopOverlay();
+        }
+    }
+    function readBinaryStringFromBlob(blob, callback, ie, ie10) {
+        var reader = new FileReader();
+        if(!ie) {
+            reader.addEventListener("loadend", function () {
+                callback(reader.result);
+            });
+            try {
+                reader.readAsBinaryString(blob);
+            } catch (err) {
+                readBinaryStringFromBlob(blob, callback, true);
+            }
+        }
+        else if (!ie10){
+            try {
+                window.URL = window.URL || window.webkitURL;
+                var blobURL = URL.createObjectURL(blob);
+                var xhr = new XMLHttpRequest;
+                xhr.open("get", blobURL);
+                xhr.overrideMimeType("text/plain; charset=x-user-defined");
+                xhr.onload = function () {
+                    callback(xhr.response);
+                };
+                xhr.send();
+            } catch (err) {
+                readBinaryStringFromBlob(blob, callback, true, true);
+            }
+        }
+        else {
+            reader.addEventListener("loadend", function () {
+                var binary = "";
+                var bytes = new Uint8Array(reader.result);
+                var length = bytes.byteLength;
+                for (var i = 0; i < length; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                callback(binary);
+            });
+            reader.readAsArrayBuffer(blob);
         }
     }
 </script>
