@@ -104,6 +104,7 @@ select {
 
 .pause,
 .increase,
+.ignore,
 .decrease {
     display: inline-block;
     font-family: 'Lato', sans-serif;
@@ -131,6 +132,12 @@ select {
     border: 1px solid #4f79ff;
 }
 
+.ignore {
+    background-color: rgb(255, 0, 0);
+    color: #ffffff !important;
+    border: 1px solid #4f79ff;
+}
+
 .pause {
     background-color: #ffffff;
     color: #4f79ff !important;
@@ -140,6 +147,7 @@ select {
 
 .increase,
 .decrease,
+.ignore,
 .time,
 #stop {
     -webkit-touch-callout: none;
@@ -148,6 +156,16 @@ select {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+.placeholder {
+    display: inline-block;
+    cursor: none;
+    width: 24px;
+    height: 24px;
+    margin-right: 5px;
+    margin-left: 5px;
+    padding-right:6px;    
 }
 
 a:hover {
