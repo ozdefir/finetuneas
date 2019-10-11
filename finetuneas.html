@@ -369,7 +369,7 @@
             var audioFilePath = URL.createObjectURL(audioFile);
             loadAudio(audioFilePath);
             ainfo = "[Audio file: \"" + audioFile.name + "\"]";
-            document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;
+            /*document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;*/
             /*document.getElementById("step1").style.display = "none";*/
         } else {
             alert("Failed to load the audio file.");
@@ -403,7 +403,7 @@
             prepareControls();
             cinfo = "[JSON file: \"" + jsonFile.name + "\"]";
             /*document.getElementById("step2").style.display = "none";*/
-            document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;
+            /*document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;*/
         };
         reader.readAsText(jsonFile);
     }
@@ -411,6 +411,10 @@
     function prepareControls() {
         // add event listeners
         for (var i = 0; i < fragments.length; i++) {
+            if (fragments[i].ignore) {
+                continue;
+            }
+
             if (showID) {
                 document.getElementById(getStringID(i, "id")).addEventListener("click", fragmentClick);
             }
@@ -424,6 +428,8 @@
 
             document.getElementById(getStringID(i, "increase", "end")).addEventListener("click", increaseClick);
             document.getElementById(getStringID(i, "decrease", "end")).addEventListener("click", decreaseClick);
+
+            document.getElementById(getStringID(i, "ignore")).addEventListener("click", ignoreClick);
         }
         document.getElementById("stop").addEventListener("click", stopOverlay);
         document.getElementById("couple").addEventListener("click", changeCouple);
@@ -459,6 +465,9 @@
 
     function applyAlignment() {
         for (var i = 0; i < fragments.length; i++) {
+            if (fragments[i].ignore) {
+                continue;
+            }
             document.getElementById(getStringID(i, "cell")).style.textAlign = alignText;
         }
     }
@@ -517,6 +526,9 @@
     function updateTimeForSegment(segment_position = "begin") {
         if (i == null) {
             for (var i = 0; i < fragments.length; i++) {
+                if (fragments[i].ignore) {
+                    continue;
+                }
                 var position = fragments[i][segment_position];
                 document.getElementById(getStringID(i, "time", segment_position)).innerHTML = formatTime(position);
             }
@@ -587,6 +599,10 @@
     function prepareTable() {
         var rows = [];
         for (var i = 0; i < fragments.length; ++i) {
+            if (fragments[i].ignore) {
+                continue;
+            }
+
             var id = fragments[i].id;
             var text = fragments[i].lines.join("<br/>");
             var begin = fragments[i].begin;
@@ -604,6 +620,7 @@
             row += '<a class="time" id="' + getStringID(i, "time", "begin") + '">' + formatTime(begin) + '<\/a>';
             row += '<a class="increase" id="' + getStringID(i, "increase", "begin") + '">+<\/a>';
             row += '<a class="decrease" id="' + getStringID(i, "decrease", "begin") + '">−<\/a>';
+            row += '<a class="ignore" id="' + getStringID(i, "ignore") + '">x<\/a>';
             row += '</div>';
 
             row += '<div style="display:block;">';
@@ -611,6 +628,7 @@
             row += '<a class="time" id="' + getStringID(i, "time", "end") + '">' + formatTime(end) + '<\/a>';
             row += '<a class="increase" id="' + getStringID(i, "increase", "end") + '">+<\/a>';
             row += '<a class="decrease" id="' + getStringID(i, "decrease", "end") + '">−<\/a>';
+            row += '<a class="placeholder"><\/a>';
             row += '</div>';
 
             row += "<\/div>";
@@ -651,6 +669,13 @@
         changeTime(evt, -timeStep);
     }
 
+    function ignoreClick(evt) {
+        var i = getID(evt.target.id);
+        fragments[i].ignore = true;
+        prepareTable()
+        prepareControls()
+    }
+
     function changeTime(evt, step) {
         var i = getID(evt.target.id);
         if (evt.target.id.indexOf("begin") > -1) {
@@ -661,8 +686,10 @@
             }
             updateTime(i, "begin");
             if (couple && (i > 0)) {
-                fragments[i - 1].end = fragments[i].begin;
-                updateTime(i-1, "end");
+                if (!fragments[i - 1].ignore) {
+                    fragments[i - 1].end = fragments[i].begin;
+                    updateTime(i-1, "end");
+                }
             }           
             highlight(CLEAR);
             currentIndex = i;
@@ -675,8 +702,10 @@
             }
             updateTime(i, "end");
             if (couple && (i+1 < fragments.length)) {
-                fragments[i+1].begin = fragments[i].end;
-                updateTime(i+1, "begin");
+                if (!fragments[i+1].ignore) {
+                    fragments[i+1].begin = fragments[i].end;
+                    updateTime(i+1, "begin");
+                }
             }
             highlight(CLEAR);
             currentIndex = i;
@@ -751,15 +780,16 @@
 
     function downloadCSV() {
         var lines = [];
-        for (var i = 0; i < fragments.length; ++i) {
-            lines[i] = fragments[i].id + "," + fragments[i].begin + "," + fragments[i].end + ',"' + fragments[i].lines.join(" ") + '"';
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
+            lines[i] = includeFragments[i].id + "," + includeFragments[i].begin + "," + includeFragments[i].end + ',"' + includeFragments[i].lines.join(" ") + '"';
         }
         return lines.join("\n");
     }
 
     function downloadJSON() {
         var jsonData = {};
-        jsonData.fragments = fragments;
+        jsonData.fragments = fragments.filter(f => !f.ignore);
 
         // convert the numbers to strings (as in the original JSON)
         function numberToString(key, value) {
@@ -780,10 +810,11 @@
         lines[j++] = '<smil xmlns:epub="http://www.idpf.org/2007/ops" xmlns="http://www.w3.org/ns/SMIL" version="3.0">';
         lines[j++] = '  <body>';
         lines[j++] = '    <seq id="s000001" epub:textref="' + pageref + '">';
-        for (var i = 0; i < fragments.length; ++i) {
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
             lines[j++] = '      <par id="p' + pad(i + 1, 6) + '">';
-            lines[j++] = '        <text src="' + pageref + '#' + fragments[i].id + '"/>';
-            lines[j++] = '        <audio src="' + audioref + '" clipBegin="' + timeSMIL(fragments[i].begin) + '" clipEnd="' + timeSMIL(fragments[i].end) + '"/>';
+            lines[j++] = '        <text src="' + pageref + '#' + includeFragments[i].id + '"/>';
+            lines[j++] = '        <audio src="' + audioref + '" clipBegin="' + timeSMIL(includeFragments[i].begin) + '" clipEnd="' + timeSMIL(includeFragments[i].end) + '"/>';
             lines[j++] = '      <\/par>';
         }
         lines[j++] = '    <\/seq>';
@@ -795,10 +826,11 @@
     function downloadSRT() {
         var lines = [];
         var j = 0;
-        for (var i = 0; i < fragments.length; ++i) {
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
             lines[j++] = "" + (i + 1);
-            lines[j++] = timeSRT(fragments[i].begin) + " --> " + timeSRT(fragments[i].end);
-            var f_lines = fragments[i].lines;
+            lines[j++] = timeSRT(includeFragments[i].begin) + " --> " + timeSRT(includeFragments[i].end);
+            var f_lines = includeFragments[i].lines;
             for (var k = 0; k < f_lines.length; ++k) {
                 lines[j++] = f_lines[k];
             }
@@ -809,8 +841,9 @@
 
     function downloadSSV() {
         var lines = [];
-        for (var i = 0; i < fragments.length; ++i) {
-            lines[i] = fragments[i].begin + " " + fragments[i].end + " " + fragments[i].id + ' "' + fragments[i].lines.join(" ") + '"';
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
+            lines[i] = includeFragments[i].begin + " " + includeFragments[i].end + " " + includeFragments[i].id + ' "' + includeFragments[i].lines.join(" ") + '"';
         }
         return lines.join("\n");
     }
@@ -822,8 +855,9 @@
         lines[j++] = '<tt xmlns="http://www.w3.org/ns/ttml" xml:lang="">';
         lines[j++] = '  <body>';
         lines[j++] = '    <div>';
-        for (var i = 0; i < fragments.length; ++i) {
-            lines[j++] = '      <p xml:id="' + fragments[i].id + '" begin="' + fragments[i].begin + 's" end="' + fragments[i].end + 's">' + fragments[i].lines.join("<br/>") + '<\/p>';
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
+            lines[j++] = '      <p xml:id="' + includeFragments[i].id + '" begin="' + includeFragments[i].begin + 's" end="' + includeFragments[i].end + 's">' + includeFragments[i].lines.join("<br/>") + '<\/p>';
         }
         lines[j++] = '    <\/div>';
         lines[j++] = '  <\/body>';
@@ -833,16 +867,18 @@
 
     function downloadTSV() {
         var lines = [];
-        for (var i = 0; i < fragments.length; ++i) {
-            lines[i] = fragments[i].begin + "\t" + fragments[i].end + "\t" + fragments[i].id;
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
+            lines[i] = includeFragments[i].begin + "\t" + includeFragments[i].end + "\t" + includeFragments[i].id;
         }
         return lines.join("\n");
     }
 
     function downloadTXT() {
         var lines = [];
-        for (var i = 0; i < fragments.length; ++i) {
-            lines[i] = fragments[i].id + " " + fragments[i].begin + " " + fragments[i].end + ' "' + fragments[i].lines.join(" ") + '"';
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
+            lines[i] = includeFragments[i].id + " " + includeFragments[i].begin + " " + includeFragments[i].end + ' "' + includeFragments[i].lines.join(" ") + '"';
         }
         return lines.join("\n");
     }
@@ -851,10 +887,11 @@
         var lines = [];
         var j = 0;
         lines[j++] = "WEBVTT\n"
-        for (var i = 0; i < fragments.length; ++i) {
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
             lines[j++] = "" + (i + 1);
-            lines[j++] = timeVTT(fragments[i].begin) + " --> " + timeVTT(fragments[i].end);
-            var f_lines = fragments[i].lines;
+            lines[j++] = timeVTT(includeFragments[i].begin) + " --> " + timeVTT(includeFragments[i].end);
+            var f_lines = includeFragments[i].lines;
             for (var k = 0; k < f_lines.length; ++k) {
                 lines[j++] = f_lines[k];
             }
@@ -868,9 +905,10 @@
         var j = 0;
         lines[j++] = "<?xml version='1.0' encoding='UTF-8'?>";
         lines[j++] = '<map>';
-        for (var i = 0; i < fragments.length; ++i) {
-            lines[j++] = '  <fragment id="' + fragments[i].id + '" begin="' + fragments[i].begin + '" end="' + fragments[i].end + '">';
-            var f_lines = fragments[i].lines;
+        var includeFragments = fragments.filter(f => !f.ignore);
+        for (var i = 0; i < includeFragments.length; ++i) {
+            lines[j++] = '  <fragment id="' + includeFragments[i].id + '" begin="' + includeFragments[i].begin + '" end="' + includeFragments[i].end + '">';
+            var f_lines = includeFragments[i].lines;
             for (var k = 0; k < f_lines.length; ++k) {
                 lines[j++] = '    <line>' + f_lines[k] + '<\/line>';
             }
@@ -931,7 +969,7 @@
             }
         }
 
-        if (cTime > fragments[currentIndex].end - TRANSITION_TIMEOUT) {
+        if (fragments[currentIndex] && cTime > fragments[currentIndex].end - TRANSITION_TIMEOUT) {
             // subtract transitionOffset seconds to account for the delay introduced by this code
             var timeLeft = (fragments[currentIndex].end - cTime - transitionOffset) * 1000 / audioElement.playbackRate;
             var index = currentIndex;
@@ -948,11 +986,12 @@
                 }
             }, timeLeft)
         }
-        // display current time
-        var percentageCompleted = ((cTime.toFixed(3)-fragments[currentIndex].begin) / (fragments[currentIndex].end - fragments[currentIndex].begin)) * 100;
-        document.getElementById("audioticker").innerHTML = cTime.toFixed(3);
-        document.getElementById("playerprogress").style.width = percentageCompleted.toString() + "%";
-
+        if (fragments[currentIndex]) {
+            // display current time
+            var percentageCompleted = ((cTime.toFixed(3)-fragments[currentIndex].begin) / (fragments[currentIndex].end - fragments[currentIndex].begin)) * 100;
+            document.getElementById("audioticker").innerHTML = cTime.toFixed(3);
+            document.getElementById("playerprogress").style.width = percentageCompleted.toString() + "%";
+        }
     }
 
     function stopOverlay() {
