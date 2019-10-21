@@ -431,7 +431,7 @@
 
             document.getElementById(getStringID(i, "ignore")).addEventListener("click", ignoreClick);
         }
-        document.getElementById("stop").addEventListener("click", stopOverlay);
+        document.getElementById("stop").addEventListener("click", pausePlayOverlay);
         document.getElementById("couple").addEventListener("click", changeCouple);
         document.getElementById("buttonShowID").addEventListener("click", changeShowID);
         document.getElementById("alignText").addEventListener("change", changeAlignText);
@@ -994,6 +994,15 @@
         }
     }
 
+    function pausePlayOverlay() {
+		if(audioElement.paused) {
+			audioElement.play();
+		}
+		else {
+			stopOverlay();
+		}
+    }
+    
     function stopOverlay() {
         audioElement.pause();
     }
