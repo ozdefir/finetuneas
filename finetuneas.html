@@ -44,8 +44,8 @@
             </div>
             <!--<div id="fileinfo"></div>-->
             <div id="step2" style="display:inline;">
-                <p class="file-label">JSON:</p>
-                <input type="file" id="fileinput" accept=".json" autocomplete="off" style="width:250px;"/>
+                <p class="file-label">Sync-map:</p>
+                <input type="file" id="fileinput" accept=".json,.csv" autocomplete="off" style="width:250px;"/>
             </div>
             <!-- AENEAS_REPLACE_COMMENT_END -->
             <!-- do not remove the line above -->
@@ -394,9 +394,13 @@
         reader.onload = function (e) {
             try {
                 fragments = JSON.parse(e.target.result).fragments;
-            } catch (e) {
-                alert("Unable to parse the given JSON file.");
-                return;
+            } catch (error) {
+		try {
+			fragments = parseCSV(e.target.result);
+		} catch (e2) {				
+			alert("Unable to parse the given syncmap file.");
+			return;
+		}
             }
             roundTimeValues();
             prepareTable();
@@ -408,6 +412,29 @@
         reader.readAsText(jsonFile);
     }
 
+    function parseCSV(contents) {
+	contents=contents.replace(/\n$/, "");
+	var lines = contents.split("\n");
+	fragments = [];
+	for (i=0; i<lines.length; i++){
+		// console.log(i);
+		lines[i] = lines[i].split(",");
+
+		//get the text
+		var fragment=lines[i].slice(3);
+		fragment=fragment.join(",");
+		fragment=fragment.replace(/\r/g,"");
+		fragments[i] = {};
+		fragments[i].lines = [];
+		fragments[i].lines[0]=fragment.slice(1, -1);
+		fragments[i].id=lines[i][0];
+		fragments[i].begin=lines[i][1];
+		fragments[i].end=lines[i][2];
+
+	}
+	return fragments;
+    }
+	
     function prepareControls() {
         // add event listeners
         for (var i = 0; i < fragments.length; i++) {
