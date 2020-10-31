@@ -45,7 +45,7 @@
             <!--<div id="fileinfo"></div>-->
             <div id="step2" style="display:inline;">
                 <p class="file-label">Sync-map:</p>
-                <input type="file" id="fileinput" accept=".json,.csv" autocomplete="off" style="width:250px;"/>
+                <input type="file" id="fileinput" accept=".json,.csv,.srt" autocomplete="off" style="width:250px;"/>
             </div>
             <!-- AENEAS_REPLACE_COMMENT_END -->
             <!-- do not remove the line above -->
@@ -394,13 +394,20 @@
         reader.onload = function (e) {
             try {
                 fragments = JSON.parse(e.target.result).fragments;
-            } catch (error) {
-		try {
-			fragments = parseCSV(e.target.result);
-		} catch (e2) {				
-			alert("Unable to parse the given syncmap file.");
-			return;
-		}
+            }
+            catch (error) {
+                try {
+                    fragments = parseSRT(e.target.result);
+                }
+                catch (e2) {
+                    try {
+                        fragments = parseCSV(e.target.result);
+                    }
+                    catch (e3) {				
+                        alert("Unable to parse the given syncmap file.");
+                        return;
+                    }
+                }
             }
             roundTimeValues();
             prepareTable();
@@ -408,31 +415,54 @@
             cinfo = "[JSON file: \"" + jsonFile.name + "\"]";
             /*document.getElementById("step2").style.display = "none";*/
             /*document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;*/
-        };
+            };
         reader.readAsText(jsonFile);
     }
 
     function parseCSV(contents) {
-	contents=contents.replace(/\n$/, "");
-	var lines = contents.split("\n");
-	fragments = [];
-	for (i=0; i<lines.length; i++){
-		// console.log(i);
-		lines[i] = lines[i].split(",");
+        contents=contents.replace(/\n$/, "");
+        var lines = contents.split("\n");
+        fragments = [];
+        for (i=0; i<lines.length; i++){
+            // console.log(i);
+            lines[i] = lines[i].split(",");
 
-		//get the text
-		var fragment=lines[i].slice(3);
-		fragment=fragment.join(",");
-		fragment=fragment.replace(/\r/g,"");
-		fragments[i] = {};
-		fragments[i].lines = [];
-		fragments[i].lines[0]=fragment.slice(1, -1);
-		fragments[i].id=lines[i][0];
-		fragments[i].begin=lines[i][1];
-		fragments[i].end=lines[i][2];
+            //get the text
+            var fragment=lines[i].slice(3);
+            fragment=fragment.join(",");
+            fragment=fragment.replace(/\r/g,"");
+            fragments[i] = {};
+            fragments[i].lines = [];
+            fragments[i].lines[0]=fragment.slice(1, -1);
+            fragments[i].id=lines[i][0];
+            fragments[i].begin=lines[i][1];
+            fragments[i].end=lines[i][2];
 
-	}
-	return fragments;
+        }
+        return fragments;
+    }
+	
+    function parseSRT(contents) {
+        contents = contents.replace(/\n$/, "");
+        contents = contents.replace(/\r/g, '');
+        var regex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/g;
+        contents = contents.split(regex);
+        contents.shift();
+
+
+        fragments = [];
+
+        for (var i = 0; i < contents.length; i += 4) {
+            fragments.push({
+                id: contents[i].trim(),
+                begin: srtTimeToSec(contents[i + 1].trim()),
+                end: srtTimeToSec(contents[i + 2].trim()),
+                lines: [contents[i + 3].trim()]
+            });
+
+        }
+
+        return fragments;
     }
 	
     function prepareControls() {
@@ -976,6 +1006,24 @@
     function timeVTT(time_value) {
         return timeHHMMSSmmm(time_value, ".");
     }
+
+    function srtTimeToSec(srtTime) {
+        var regex = /(\d+):(\d{2}):(\d{2}),(\d{3})/;
+        var parts = regex.exec(srtTime);
+
+        if (parts === null) {
+            return 0;
+        }
+
+        for (var i = 1; i < 5; i++) {
+            parts[i] = parseInt(parts[i], 10);
+            if (isNaN(parts[i])) parts[i] = 0;
+        }
+
+        // hours + minutes + seconds + ms
+        var seconds = parts[1] * 3600 + parts[2] * 60 + parts[3] + parts[4] / 1000;
+        return seconds;
+    };
 
     function ticker(cTime) {
         // TODO ALPE use a global stopwatch object
