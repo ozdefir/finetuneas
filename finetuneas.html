@@ -394,6 +394,7 @@
         reader.onload = function (e) {
             try {
                 fragments = JSON.parse(e.target.result).fragments;
+                fragments = checkForNested(fragments)
             }
             catch (error) {
                 try {
@@ -409,6 +410,7 @@
                     }
                 }
             }
+            checkForNested();           
             roundTimeValues();
             prepareTable();
             prepareControls();
@@ -650,6 +652,22 @@
         for (var i = 0; i < fragments.length; i++) {
             fragments[i].begin = roundTimeValue(fragments[i].begin);
             fragments[i].end = roundTimeValue(fragments[i].end);
+        }
+    }
+
+    function checkForNested(fragments) {
+        childFragments = []
+        if (fragments && fragments[0] && fragments[0].children.length) { 
+            for (var i = 0; i < fragments.length; i++) {
+                Array.prototype.push.apply(childFragments, fragments[i].children);
+                // console.log(fragments[i].children)
+
+            }
+            return checkForNested(childFragments);
+
+        }
+        else {
+            return fragments;
         }
     }
 
