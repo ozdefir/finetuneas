@@ -132,6 +132,7 @@
                          global variables and constants
                         */
     var fragments = [];
+    var multiFragments = [];
     var currentIndex = 0;
     var audioElement = document.getElementById("audioplayer");
     var ainfo = "";
@@ -352,7 +353,7 @@
         if (audioFile) {
         
             readBinaryStringFromBlob(audioFile, catchXingHeader);
-            console.log(audioFile);
+            // console.log(audioFile);
             function catchXingHeader(binary) {		
                 console.log(binary.slice(0,1000));
                 xingMatch = binary.match(/(Info|Xing)\x00\x00\x00/);
@@ -393,8 +394,8 @@
         var reader = new FileReader();
         reader.onload = function (e) {
             try {
-                fragments = JSON.parse(e.target.result).fragments;
-                fragments = checkForNested(fragments)
+                multiFragments = JSON.parse(e.target.result).fragments;
+                fragments = checkForNested(multiFragments)
             }
             catch (error) {
                 try {
@@ -604,6 +605,7 @@
         } else {
             updateTimeForSegment("end")
         }
+        updateParent(fragments[i]);
     }
 
     function formatTime(time_value) {
@@ -658,10 +660,16 @@
     function checkForNested(fragments) {
         childFragments = []
         if (fragments && fragments[0] && fragments[0].children.length) { 
+            
             for (var i = 0; i < fragments.length; i++) {
                 Array.prototype.push.apply(childFragments, fragments[i].children);
                 // console.log(fragments[i].children)
 
+                fragments[i].children.forEach( function(child) { // add a "parent" property to each children
+                    child.parent = fragments[i];
+                })
+                
+                
             }
             return checkForNested(childFragments);
 
@@ -670,6 +678,28 @@
             return fragments;
         }
     }
+
+    function updateParent(fragment) {
+        if (fragment.hasOwnProperty("parent")) {
+            fragment.parent.children = fragment.parent.children.filter(f => !f.ignore);
+            if (fragment.parent.children.length) {
+                firstChild = fragment.parent.children[0];
+                numberOfKids = fragment.parent.children.length;
+                lastChild = fragment.parent.children[numberOfKids-1];
+
+                fragment.parent.begin = firstChild.begin.toString();
+                fragment.parent.end = lastChild.end.toString();
+
+            }
+            else {
+                fragment.parent.ignore = true;
+            }
+            updateParent(fragment.parent);
+            // delete fragment.parent;
+
+        }
+    }
+
 
     function prepareTable() {
         var rows = [];
@@ -747,8 +777,9 @@
     function ignoreClick(evt) {
         var i = getID(evt.target.id);
         fragments[i].ignore = true;
-        prepareTable()
-        prepareControls()
+        updateParent(fragments[i]);
+        prepareTable();
+        prepareControls();
     }
 
     function changeTime(evt, step) {
@@ -864,17 +895,25 @@
 
     function downloadJSON() {
         var jsonData = {};
-        jsonData.fragments = fragments.filter(f => !f.ignore);
 
-        // convert the numbers to strings (as in the original JSON)
-        function numberToString(key, value) {
-            if (typeof value === "number") {
+        if (multiFragments) {
+            jsonData.fragments = multiFragments.filter(f => !f.ignore);
+        }
+        else {
+            jsonData.fragments = fragments.filter(f => !f.ignore);
+        }
+
+        // 1- remove the "parent" properties, 2- convert the numbers to strings (as in the original JSON)
+        function preProcess(key, value) {
+            if (key === "parent") {
+                value = undefined;
+            }
+           if (typeof value === "number") {
                 value = value.toString();
             }
             return value;
         }
-
-        return JSON.stringify(jsonData, numberToString, " ");
+        return JSON.stringify(jsonData, preProcess, " ");
     }
 
     function downloadSMIL() {
