@@ -64,28 +64,73 @@
     <!-- END directions -->
     <div class="row b-content">
         <div class="col-3" style="position:fixed">
-            <div class="settings">
+            <div class="settings mt-sm-3">
                 <label for="timeStep" style="display:block">Time increment (s):</label>
                 <input id="timeStep" type="number" min="0.010" step="0.010" value="0.100" style="display:block"/>
-                <label for="couple" style="display:block">Couple ends/starts:</label>
-                <button class="btn btn-primary btn-sm" id="couple" style="display:block">OFF</button>
-                <label for="buttonShowID" style="display:block">Show ID:</label>
-                <button class="btn btn-primary btn-sm" id="buttonShowID" style="display:block">OFF</button>
-                <label for="alignText" style="display:block">Text alignment:</label>
-                <select name="alignText" id="alignText" style="display:block">
-                    <option value="left">Left</option>
-                    <option value="center" selected="selected">Center</option>
-                    <option value="right">Right</option>
-                    <option value="justify">Justify</option>
-                </select>
+                <div class="container mt-sm-2">
+                    <div class="row">
+                      <div class="col-sm">
+                        <label for="couple" style="display:block">Pair end/start:</label>
+                      </div>
+                      <div class="col-sm">
+                        <button class="btn btn-primary btn-sm" id="couple" style="display:block">OFF</button>
+                      </div>
+                    </div>
+                </div>
+
+                <div class="container mt-sm-1">
+                    <div class="row">
+                      <div class="col-sm">
+                        <label for="buttonShowID" style="display:block">Show ID:</label>
+                      </div>
+                      <div class="col-sm">
+                        <button class="btn btn-primary btn-sm" id="buttonShowID" style="display:block">OFF</button>
+                      </div>
+                    </div>
+                </div>
+
+                <div class="container mt-sm-1">
+                    <div class="row">
+                      <div class="col-sm">
+                        <label for="alignText" style="display:block">Text alignment:</label>
+                      </div>
+                      <div class="col-sm">
+                        <select name="alignText" id="alignText" style="display:block">
+                            <option value="left">Left</option>
+                            <option value="center" selected="selected">Center</option>
+                            <option value="right">Right</option>
+                            <option value="justify">Justify</option>
+                        </select>
+                      </div>
+                    </div>
+                </div>
+
                 <hr style="display:block"/>
                 <label for="playbackRate" style="display:block">Playback rate:</label>
                 <input id="playbackRate" type="number" min="0.1" max="4.0" step="0.1" value="1.0"
                        style="display:block"/>
-                <label for="buttonContinuousPlay">Continuous play:</label>
-                <button class="btn btn-primary btn-sm" id="buttonContinuousPlay" style="display:block">OFF</button>
-                <label for="buttonTimeFormat" style="display:block">Time format:</label>
-                <button class="btn btn-primary btn-sm" id="buttonTimeFormat" style="display:block">DECIMAL</button>
+                <div class="container mt-sm-2">
+                    <div class="row">
+                        <div class="col-sm">
+                            <label for="buttonContinuousPlay">Continuous:</label>
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-primary btn-sm" id="buttonContinuousPlay" style="display:block">OFF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container mt-sm-1">
+                    <div class="row">
+                        <div class="col-sm">
+                            <label for="buttonTimeFormat" style="display:block">Time format:</label>
+                        </div>
+                        <div class="col-sm">
+                            <button class="btn btn-primary btn-sm" id="buttonTimeFormat" style="display:block">DECIMAL</button>
+                        </div>
+                    </div>
+                </div>
+
                 <label for="transitionOffset" style="display:block">Transition offset (s):</label>
                 <input id="transitionOffset" type="number" min="0" max="0.400" step="0.010" value="0.100"
                        style="display:block"/>
@@ -94,22 +139,29 @@
                        style="display:inline-block"/>
                 <button class="btn btn-primary btn-sm" id="buttonPlayWindow" style="display:inline-block">OFF</button>
                 <hr style="display:block"/>
-                <label for="outputFormat" style="display:block">Format:</label>
-                <select name="outputFormat" id="outputFormat" style="display:block">
-                    <option value="csv">CSV</option>
-                    <option value="json" selected="selected">JSON</option>
-                    <option value="smil">SMIL</option>
-                    <option value="srt">SRT</option>
-                    <option value="ssv">SSV</option>
-                    <option value="ttml">TTML</option>
-                    <option value="tsv">TSV</option>
-                    <option value="txt">TXT</option>
-                    <option value="vtt">VTT</option>
-                    <option value="xml">XML</option>
-                </select>
-                <input id="smilAudioRef" style="display:none" type="text" placeholder="audio_ref"/>
-                <input id="smilPageRef" style="display:none" type="text" placeholder="page_ref"/>
-                <button class="btn btn-primary btn-sm" id="download" style="display:block;margin-top:5px;margin-bottom:5px;">Save</button>
+                <div class="container" style="padding-bottom: 20px">
+                    <div class="row">
+                        <div class="col">
+                            <select name="outputFormat" id="outputFormat">
+                                <option value="csv">CSV</option>
+                                <option value="json" selected="selected">JSON</option>
+                                <option value="smil">SMIL</option>
+                                <option value="srt">SRT</option>
+                                <option value="ssv">SSV</option>
+                                <option value="ttml">TTML</option>
+                                <option value="tsv">TSV</option>
+                                <option value="txt">TXT</option>
+                                <option value="vtt">VTT</option>
+                                <option value="xml">XML</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <input id="smilAudioRef" style="display:none" type="text" placeholder="audio_ref"/>
+                            <input id="smilPageRef" style="display:none" type="text" placeholder="page_ref"/>
+                            <button class="btn btn-primary btn-sm" id="download">Save</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-sm col-lg-9 offset-md-3">
@@ -118,7 +170,6 @@
             </div>
         </div>
     </div>
-
 
     <!--<div class="footer b-footer">
         <a href="https://github.com/ozdefir/finetuneas">finetuneas v1.0.2</a>
