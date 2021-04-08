@@ -7,9 +7,10 @@
 # Version 3.0
 1. Easier adjusting time: following cells will be adjusted according to the previous changes
 2. Work right-to-left languages
-3. One can type the time - easier
-4. the output will be saved as a CSV file too
-5. Last but not the least looks more stylish
+3. One can type in the time as well as the text directly - easier
+4. Removing a middle-cell leads to merging above and the bottom cells while the time are adjusted
+5. the output will be saved as a CSV file too
+6. Last but not the least looks more stylish
 
 ## Usage
 
