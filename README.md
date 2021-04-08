@@ -1,9 +1,15 @@
-# finetuneas
+# finetuneas 3.0
 
 **finetuneas** is a simple HTML interface for fine tuning sync maps output by [aeneas](https://github.com/readbeyond/aeneas)
 
 ![alt text](https://github.com/klintan/finetuneas/raw/master/screenshot.png "Finetuneas screenshot")
 
+# Version 3.0
+1. Easier adjusting time: following cells will be adjusted according to the previous changes
+2. Work right-to-left languages
+3. One can type the time - easier
+4. the output will be saved as a CSV file too
+5. Last but not the least looks more stylish
 
 ## Usage
 
