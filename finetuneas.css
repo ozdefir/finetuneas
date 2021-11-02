@@ -20,6 +20,7 @@ select {
 .b-header {
     margin-top: 15px;
     margin-bottom: 15px;
+    height: 111px;
 }
 
 .b-header .sidebar-menu {
@@ -47,20 +48,25 @@ select {
 
 .b-content {
     background-color: #efeff7;
+    height: calc(100vh - 141px);
+}
+
+.b-content > div {
+  background: #ffffff content-box;
+  padding-left: 8px;
+  margin-top: 15px;
+  height: calc(100% - 15px);
+  overflow: auto;
 }
 
 .b-content .settings {
-    background-color: #ffffff;
-    padding-left: 15px;
+  padding-left: 4px
 }
 
 .b-content .tg {
     display: table;
-    overflow: hidden;
-    background-color: #ffffff;
     width: 100%;
     direction: ltr;
-    margin: 20px 0;
 }
 
 .b-content .adjust-label {
@@ -94,7 +100,8 @@ select {
     position: relative;
     font-size: 100%;
     line-height: 100%;
-    cursor: pointer;
+    cursor: text;
+    display: inline-block;
     font-weight: 400;
     background-color: #fff;
     padding: 2px 5px 0px 5px;
@@ -104,7 +111,6 @@ select {
 
 .pause,
 .increase,
-.ignore,
 .decrease {
     display: inline-block;
     font-family: 'Lato', sans-serif;
@@ -132,12 +138,6 @@ select {
     border: 1px solid #4f79ff;
 }
 
-.ignore {
-    background-color: rgb(255, 0, 0);
-    color: #ffffff !important;
-    border: 1px solid #4f79ff;
-}
-
 .pause {
     background-color: #ffffff;
     color: #4f79ff !important;
@@ -147,7 +147,6 @@ select {
 
 .increase,
 .decrease,
-.ignore,
 .time,
 #stop {
     -webkit-touch-callout: none;
@@ -156,16 +155,6 @@ select {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-}
-
-.placeholder {
-    display: inline-block;
-    cursor: none;
-    width: 24px;
-    height: 24px;
-    margin-right: 5px;
-    margin-left: 5px;
-    padding-right:6px;    
 }
 
 a:hover {
@@ -234,7 +223,14 @@ tr {
 }
 
 #player {
-    display: inline;
+  margin-top: 1em;
+  display: flex;
+  align-items: center;
+}
+
+#player audio {
+  margin-right: .75em;
+  outline: none;
 }
 
 #audioticker {
@@ -260,3 +256,111 @@ tr {
 .footer a {
     color: #555;
 }
+#sectionScrubberContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 180px;
+  margin-right: .75em;
+}
+
+#playerprogress {
+  width: 100%;
+}
+
+#audioLabel, #jsonLabel {
+  min-width: 10em;
+  display: inline-block;
+}
+
+/* range styling */
+input[type=range] {
+  height: 20px;
+  -webkit-appearance: none;
+  margin: 10px 0;
+  width: 100%;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 14px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 0px 0px 0px #000000;
+  background: #0B0C0E;
+  border-radius: 5px;
+  border: 0px solid #000000;
+}
+input[type=range]::-webkit-slider-thumb {
+  box-shadow: 0px 0px 0px #000000;
+  border: 0px solid #000000;
+  height: 14px;
+  width: 20px;
+  border-radius: 5px;
+  background: #CCCCCC;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: 0px;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #0B0C0E;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 14px;
+  cursor: pointer;
+  animate: 0.2s;
+  box-shadow: 0px 0px 0px #000000;
+  background: #0B0C0E;
+  border-radius: 5px;
+  border: 0px solid #000000;
+}
+input[type=range]::-moz-range-thumb {
+  box-shadow: 0px 0px 0px #000000;
+  border: 0px solid #000000;
+  height: 14px;
+  width: 20px;
+  border-radius: 5px;
+  background: #CCCCCC;
+  cursor: pointer;
+}
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 14px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+input[type=range]::-ms-fill-lower {
+  background: #0B0C0E;
+  border: 0px solid #000000;
+  border-radius: 10px;
+  box-shadow: 0px 0px 0px #000000;
+}
+input[type=range]::-ms-fill-upper {
+  background: #0B0C0E;
+  border: 0px solid #000000;
+  border-radius: 10px;
+  box-shadow: 0px 0px 0px #000000;
+}
+input[type=range]::-ms-thumb {
+  margin-top: 1px;
+  box-shadow: 0px 0px 0px #000000;
+  border: 0px solid #000000;
+  height: 14px;
+  width: 20px;
+  border-radius: 5px;
+  background: #CCCCCC;
+  cursor: pointer;
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: #0B0C0E;
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: #0B0C0E;
+}
+/* end range styling */
