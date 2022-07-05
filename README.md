@@ -4,14 +4,6 @@
 
 ![alt text](https://github.com/naarkhoo/finetuneas/blob/master/screenshot.png "Finetuneas screenshot")
 
-# Version 3.0
-1. Easier adjusting time: following cells will be adjusted according to the previous changes
-2. Work right-to-left languages
-3. One can type in the time as well as the text directly - easier
-4. Removing a middle-cell leads to merging above and the bottom cells while the time are adjusted
-5. the output will be saved as a CSV file too
-6. Last but not the least looks more stylish
-
 ## Usage
 
 1. Before you start making adjustments, check several fragments at random to be sure that the sync map is mostly correct and it just needs fine tuning. If not, check your `aeneas` input files and parameters and run `aeneas` again.

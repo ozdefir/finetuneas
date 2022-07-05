@@ -286,6 +286,7 @@ function loadAudio(audioFilePath) {
 function buttonLoadJSON(evt) {
     var jsonFile = evt.target.files[0];
     if (jsonFile) {
+        console.log(jsonFile)
         loadJSON(jsonFile);
     } else {
         alert("Failed to load the JSON file.");
@@ -293,22 +294,83 @@ function buttonLoadJSON(evt) {
 }
 
 function loadJSON(jsonFile) {
+
     var reader = new FileReader();
     reader.onload = function (e) {
+        var extension = jsonFile.name.replace(/^.+\.([^\.]+)/, "$1").toLowerCase();
         try {
-            fragments = JSON.parse(e.target.result).fragments;
-        } catch (e) {
-            alert("Unable to parse the given JSON file.");
-            return;
+            if (extension == "json") {
+                multiFragments = JSON.parse(e.target.result).fragments;
+                fragments = checkForNested(multiFragments);           
+            }
+            else if (extension == "srt") {
+                fragments = parseSRT(e.target.result);
+            }
+            else {
+                fragments = parseCSV(e.target.result);
+            }
         }
+        catch (error) {				
+                    alert("Unable to parse the given syncmap file:\n" + error);
+                    return;
+        }
+        console.log("read json")
+        console.log("multifragments", multiFragments)      
+        console.log("fragments", fragments)      
         roundTimeValues();
         prepareTable();
         prepareControls();
-        // cinfo = "[JSON file: \"" + jsonFile.name + "\"]";
+        cinfo = "[JSON file: \"" + jsonFile.name + "\"]";
         /*document.getElementById("step2").style.display = "none";*/
-        document.getElementById("jsonLabel").innerHTML = jsonFile.name;
-    };
+        /*document.getElementById("fileinfo").innerHTML = ainfo + " " + cinfo;*/
+        };
     reader.readAsText(jsonFile);
+}
+
+function parseCSV(contents) {
+    contents=contents.replace(/\n$/, "");
+    var lines = contents.split("\n");
+    fragments = [];
+    for (i=0; i<lines.length; i++){
+        // console.log(i);
+        lines[i] = lines[i].split(",");
+
+        //get the text
+        var fragment=lines[i].slice(3);
+        fragment=fragment.join(",");
+        fragment=fragment.replace(/\r/g,"");
+        fragments[i] = {};
+        fragments[i].lines = [];
+        fragments[i].lines[0]=fragment.slice(1, -1);
+        fragments[i].id=lines[i][0];
+        fragments[i].begin=lines[i][1];
+        fragments[i].end=lines[i][2];
+
+    }
+    return fragments;
+}
+
+function parseSRT(contents) {
+    contents = contents.replace(/\n$/, "");
+    contents = contents.replace(/\r/g, '');
+    var regex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/g;
+    contents = contents.split(regex);
+    contents.shift();
+
+
+    fragments = [];
+
+    for (var i = 0; i < contents.length; i += 4) {
+        fragments.push({
+            id: contents[i].trim(),
+            begin: srtTimeToSec(contents[i + 1].trim()),
+            end: srtTimeToSec(contents[i + 2].trim()),
+            lines: [contents[i + 3].trim()]
+        });
+
+    }
+
+    return fragments;
 }
 
 function prepareControls() {
@@ -502,6 +564,55 @@ function roundTimeValues() {
     }
 }
 
+function checkForNested(fragments) {
+    childFragments = []
+    console.log("f", fragments)
+    if (fragments 
+        && fragments[0] 
+        && fragments[0].children
+        && fragments[0].children.length)
+        { 
+        console.log("if", fragments)
+        for (var i = 0; i < fragments.length; i++) {
+            Array.prototype.push.apply(childFragments, fragments[i].children);
+            // console.log(fragments[i].children)
+
+            fragments[i].children.forEach( function(child) { // add a "parent" property to each children
+                child.parent = fragments[i];
+            })
+            
+            
+        }
+        return checkForNested(childFragments);
+
+    }
+    else {
+        console.log("r", fragments);
+        return fragments;
+    }
+}
+
+function updateParent(fragment) {
+    if (fragment.hasOwnProperty("parent")) {
+        fragment.parent.children = fragment.parent.children.filter(f => !f.ignore);
+        if (fragment.parent.children.length) {
+            firstChild = fragment.parent.children[0];
+            numberOfKids = fragment.parent.children.length;
+            lastChild = fragment.parent.children[numberOfKids-1];
+
+            fragment.parent.begin = firstChild.begin.toString();
+            fragment.parent.end = lastChild.end.toString();
+
+        }
+        else {
+            fragment.parent.ignore = true;
+        }
+        updateParent(fragment.parent);
+        // delete fragment.parent;
+
+    }
+}
+
 function prepareTable() {
     var rows = [];
     for (var i = 0; i < fragments.length; ++i) {
@@ -637,6 +748,14 @@ function increaseClick(evt) {
 
 function decreaseClick(evt) {
     changeTime(evt, -timeStep);
+}
+
+function ignoreClick(evt) {
+    var i = getID(evt.target.id);
+    fragments[i].ignore = true;
+    updateParent(fragments[i]);
+    prepareTable();
+    prepareControls();
 }
 
 function changeTime(evt, step) {
@@ -909,6 +1028,24 @@ function timeSRT(time_value) {
 function timeVTT(time_value) {
     return timeHHMMSSmmm(time_value, ".");
 }
+
+function srtTimeToSec(srtTime) {
+    var regex = /(\d+):(\d{2}):(\d{2}),(\d{3})/;
+    var parts = regex.exec(srtTime);
+
+    if (parts === null) {
+        return 0;
+    }
+
+    for (var i = 1; i < 5; i++) {
+        parts[i] = parseInt(parts[i], 10);
+        if (isNaN(parts[i])) parts[i] = 0;
+    }
+
+    // hours + minutes + seconds + ms
+    var seconds = parts[1] * 3600 + parts[2] * 60 + parts[3] + parts[4] / 1000;
+    return seconds;
+};
 
 function ticker(cTime) {
     // TODO ALPE use a global stopwatch object
